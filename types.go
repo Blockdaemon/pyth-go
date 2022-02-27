@@ -180,3 +180,26 @@ func (p *PriceAccount) GetComponent(publisher *solana.PublicKey) *PriceComp {
 	}
 	return nil
 }
+
+type MappingAccount struct {
+	AccountHeader
+	Num      uint32
+	Unused   uint32
+	Next     solana.PublicKey
+	Products [640]solana.PublicKey
+}
+
+// UnmarshalBinary decodes a mapping account from the on-chain format.
+func (m *MappingAccount) UnmarshalBinary(buf []byte) error {
+	decoder := bin.NewBinDecoder(buf)
+	if err := decoder.Decode(m); err != nil {
+		return err
+	}
+	if !m.AccountHeader.Valid() {
+		return errors.New("invalid account")
+	}
+	if m.AccountType != AccountTypeMapping {
+		return errors.New("not a mapping account")
+	}
+	return nil
+}
