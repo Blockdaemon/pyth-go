@@ -4,14 +4,69 @@ import (
 	_ "embed"
 	"testing"
 
-	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-//go:embed tests/E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh.bin
-var casePriceAccount []byte
+var (
+	//go:embed tests/EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko.bin
+	caseProductAccount []byte
+	//go:embed tests/E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh.bin
+	casePriceAccount []byte
+)
+
+func TestProductAccount(t *testing.T) {
+	expected := Product{
+		AccountHeader: AccountHeader{
+			Magic:       Magic,
+			Version:     V2,
+			AccountType: AccountTypeProduct,
+			Size:        161,
+		},
+		FirstPrice: solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh"),
+		Attrs: [464]byte{
+			0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x0a,
+			0x46, 0x58, 0x2e, 0x45, 0x55, 0x52, 0x2f, 0x55,
+			0x53, 0x44, 0x0a, 0x61, 0x73, 0x73, 0x65, 0x74,
+			0x5f, 0x74, 0x79, 0x70, 0x65, 0x02, 0x46, 0x58,
+			0x0e, 0x71, 0x75, 0x6f, 0x74, 0x65, 0x5f, 0x63,
+			0x75, 0x72, 0x72, 0x65, 0x6e, 0x63, 0x79, 0x03,
+			0x55, 0x53, 0x44, 0x0b, 0x64, 0x65, 0x73, 0x63,
+			0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x07,
+			0x45, 0x55, 0x52, 0x2f, 0x55, 0x53, 0x44, 0x0e,
+			0x67, 0x65, 0x6e, 0x65, 0x72, 0x69, 0x63, 0x5f,
+			0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x06, 0x45,
+			0x55, 0x52, 0x55, 0x53, 0x44, 0x04, 0x62, 0x61,
+			0x73, 0x65, 0x03, 0x45, 0x55, 0x52, 0x05, 0x74,
+			0x65, 0x6e, 0x6f, 0x72, 0x04, 0x53, 0x70, 0x6f,
+			0x74, 0x53, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		},
+	}
+
+	var actual Product
+	require.NoError(t, actual.UnmarshalBinary(caseProductAccount))
+
+	assert.Equal(t, &expected, &actual)
+
+	t.Run("GetAttrs", func(t *testing.T) {
+		expected := map[string]string{
+			"asset_type":     "FX",
+			"base":           "EUR",
+			"description":    "EUR/USD",
+			"generic_symbol": "EURUSD",
+			"quote_currency": "USD",
+			"symbol":         "FX.EUR/USD",
+			"tenor":          "Spot",
+		}
+		actual, err := actual.GetAttrs()
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	})
+}
 
 func TestPriceAccount(t *testing.T) {
 	expected := PriceAccount{
@@ -19,8 +74,8 @@ func TestPriceAccount(t *testing.T) {
 			Magic:       Magic,
 			Version:     V2,
 			AccountType: AccountTypePrice,
+			Size:        1200,
 		},
-		Size:      1200,
 		PriceType: 1,
 		Exponent:  -5,
 		Num:       10,
@@ -120,9 +175,8 @@ func TestPriceAccount(t *testing.T) {
 		},
 	}
 
-	decoder := bin.NewBinDecoder(casePriceAccount)
 	var actual PriceAccount
-	require.NoError(t, decoder.Decode(&actual))
+	require.NoError(t, actual.UnmarshalBinary(casePriceAccount))
 
 	assert.Equal(t, &expected, &actual)
 }

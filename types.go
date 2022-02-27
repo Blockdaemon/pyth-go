@@ -15,6 +15,7 @@
 package pyth
 
 import (
+	"bytes"
 	"errors"
 
 	bin "github.com/gagliardetto/binary"
@@ -39,10 +40,11 @@ type AccountHeader struct {
 	Magic       uint32
 	Version     uint32
 	AccountType uint32
+	Size        uint32
 }
 
 func (h AccountHeader) Valid() bool {
-	return h.Magic == Magic && h.Version == V2
+	return h.Magic == Magic && h.Version == V2 && h.Size < 65536
 }
 
 // PeekAccount determines the account type given the account's data bytes.
@@ -53,6 +55,64 @@ func PeekAccount(data []byte) uint32 {
 		return AccountTypeUnknown
 	}
 	return header.AccountType
+}
+
+func readLPString(rd *bytes.Reader) (string, error) {
+	strLen, err := rd.ReadByte()
+	if err != nil {
+		return "", err
+	}
+	val := make([]byte, strLen)
+	if _, err := rd.Read(val); err != nil {
+		return "", err
+	}
+	return string(val), nil
+}
+
+type Product struct {
+	AccountHeader
+	FirstPrice solana.PublicKey
+	Attrs      [464]byte
+}
+
+// UnmarshalBinary decodes the product account from the on-chain format.
+func (p *Product) UnmarshalBinary(buf []byte) error {
+	decoder := bin.NewBinDecoder(buf)
+	if err := decoder.Decode(p); err != nil {
+		return err
+	}
+	if !p.AccountHeader.Valid() {
+		return errors.New("invalid account")
+	}
+	if p.AccountType != AccountTypeProduct {
+		return errors.New("not a product account")
+	}
+	return nil
+}
+
+func (p *Product) GetAttrs() (map[string]string, error) {
+	kvps := make(map[string]string)
+
+	attrs := p.Attrs[:]
+	maxSize := int(p.Size) - 48
+	if maxSize > 0 && len(attrs) > maxSize {
+		attrs = attrs[:maxSize]
+	}
+
+	rd := bytes.NewReader(attrs)
+	for rd.Len() > 0 {
+		key, err := readLPString(rd)
+		if err != nil {
+			return kvps, err
+		}
+		val, err := readLPString(rd)
+		if err != nil {
+			return kvps, err
+		}
+		kvps[key] = val
+	}
+
+	return kvps, nil
 }
 
 type Ema struct {
@@ -77,7 +137,6 @@ type PriceComp struct {
 
 type PriceAccount struct {
 	AccountHeader
-	Size       uint32
 	PriceType  uint32
 	Exponent   int32
 	Num        uint32
