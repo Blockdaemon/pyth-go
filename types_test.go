@@ -33,7 +33,7 @@ var (
 )
 
 func TestProductAccount(t *testing.T) {
-	expected := Product{
+	expected := ProductAccount{
 		AccountHeader: AccountHeader{
 			Magic:       Magic,
 			Version:     V2,
@@ -63,7 +63,7 @@ func TestProductAccount(t *testing.T) {
 		},
 	}
 
-	var actual Product
+	var actual ProductAccount
 	require.NoError(t, actual.UnmarshalBinary(caseProductAccount))
 
 	assert.Equal(t, &expected, &actual)

@@ -36,14 +36,17 @@ const (
 	AccountTypePrice
 )
 
+// AccountHeader is a 16-byte header at the beginning of each account type.
 type AccountHeader struct {
-	Magic       uint32
-	Version     uint32
-	AccountType uint32
-	Size        uint32
+	Magic       uint32 // set exactly to 0xa1b2c3d4
+	Version     uint32 // currently V2
+	AccountType uint32 // account type following the header
+	Size        uint32 // size of the account including the header
 }
 
+// Valid performs basic checks on an account.
 func (h AccountHeader) Valid() bool {
+	// Note: This size restriction is not enforced per protocol.
 	return h.Magic == Magic && h.Version == V2 && h.Size < 65536
 }
 
@@ -57,6 +60,7 @@ func PeekAccount(data []byte) uint32 {
 	return header.AccountType
 }
 
+// readLPString returns a length-prefixed string as seen in ProductAccount.Attrs.
 func readLPString(rd *bytes.Reader) (string, error) {
 	strLen, err := rd.ReadByte()
 	if err != nil {
@@ -69,14 +73,16 @@ func readLPString(rd *bytes.Reader) (string, error) {
 	return string(val), nil
 }
 
-type Product struct {
+// ProductAccount contains metadata for a single product,
+// such as its symbol and its base/quote currencies.
+type ProductAccount struct {
 	AccountHeader
-	FirstPrice solana.PublicKey
-	Attrs      [464]byte
+	FirstPrice solana.PublicKey // first price account in list
+	Attrs      [464]byte        // key-value string pairs of additional data
 }
 
 // UnmarshalBinary decodes the product account from the on-chain format.
-func (p *Product) UnmarshalBinary(buf []byte) error {
+func (p *ProductAccount) UnmarshalBinary(buf []byte) error {
 	decoder := bin.NewBinDecoder(buf)
 	if err := decoder.Decode(p); err != nil {
 		return err
@@ -90,7 +96,8 @@ func (p *Product) UnmarshalBinary(buf []byte) error {
 	return nil
 }
 
-func (p *Product) GetAttrs() (map[string]string, error) {
+// GetAttrs returns the parsed set of key-value pairs.
+func (p *ProductAccount) GetAttrs() (map[string]string, error) {
 	kvps := make(map[string]string)
 
 	attrs := p.Attrs[:]
@@ -115,45 +122,51 @@ func (p *Product) GetAttrs() (map[string]string, error) {
 	return kvps, nil
 }
 
+// Ema is an exponentially-weighted moving average.
 type Ema struct {
 	Val   int64
 	Numer int64
 	Denom int64
 }
 
+// PriceInfo contains a price adn confidence at a specific slot.
+//
+// This struct can represent either a publisher's contribution or the outcome of price aggregation.
 type PriceInfo struct {
-	Price   int64
-	Conf    uint64
-	Status  uint32
+	Price   int64  // current price
+	Conf    uint64 // confidence interval around the price
+	Status  uint32 // status of price
 	CorpAct uint32
-	PubSlot uint64
+	PubSlot uint64 // valid publishing slot
 }
 
+// PriceComp contains the price and confidence contributed by a specific publisher.
 type PriceComp struct {
-	Publisher solana.PublicKey
-	Agg       PriceInfo
-	Latest    PriceInfo
+	Publisher solana.PublicKey // key of contributing publisher
+	Agg       PriceInfo        // price used to compute the current aggregate price
+	Latest    PriceInfo        // latest price of publisher
 }
 
+// PriceAccount represents a continuously-updating price feed for a product.
 type PriceAccount struct {
 	AccountHeader
-	PriceType  uint32
-	Exponent   int32
-	Num        uint32
-	NumQt      uint32
-	LastSlot   uint64
-	ValidSlot  uint64
-	Twap       Ema
-	Twac       Ema
-	Drv1, Drv2 int64
-	Product    solana.PublicKey
-	Next       solana.PublicKey
-	PrevSlot   uint64
-	PrevPrice  int64
-	PrevConf   uint64
-	Drv3       int64
-	Agg        PriceInfo
-	Components [32]PriceComp
+	PriceType  uint32           // price or calculation type
+	Exponent   int32            // price exponent
+	Num        uint32           // number of component prices
+	NumQt      uint32           // number of quoters that make up aggregate
+	LastSlot   uint64           // slot of last valid (not unknown) aggregate price
+	ValidSlot  uint64           // valid slot of aggregate price
+	Twap       Ema              // exponential moving average price
+	Twac       Ema              // exponential moving confidence interval
+	Drv1, Drv2 int64            // reserved for future use
+	Product    solana.PublicKey // ProductAccount key
+	Next       solana.PublicKey // next PriceAccount key in linked list
+	PrevSlot   uint64           // valid slot of previous update
+	PrevPrice  int64            // aggregate price of previous update
+	PrevConf   uint64           // confidence interval of previous update
+	Drv3       int64            // reserved for future use
+	Agg        PriceInfo        // aggregate price info
+	Components [32]PriceComp    // price components for each quoter
 }
 
 // UnmarshalBinary decodes the price account from the on-chain format.
@@ -181,6 +194,7 @@ func (p *PriceAccount) GetComponent(publisher *solana.PublicKey) *PriceComp {
 	return nil
 }
 
+// MappingAccount is a piece of a singly linked-list of all products on Pyth.
 type MappingAccount struct {
 	AccountHeader
 	Num      uint32
