@@ -17,6 +17,8 @@ package pyth
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"io"
 
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
@@ -60,17 +62,61 @@ func PeekAccount(data []byte) uint32 {
 	return header.AccountType
 }
 
+func unmarshalLPKVs(rd *bytes.Reader) (out map[string]string, n int, err error) {
+	kvps := make(map[string]string)
+	for rd.Len() > 0 {
+		key, n2, err := readLPString(rd)
+		if err != nil {
+			return kvps, n, err
+		}
+		n += n2
+		val, n3, err := readLPString(rd)
+		if err != nil {
+			return kvps, n, err
+		}
+		n += n3
+		kvps[key] = val
+	}
+	return kvps, n, nil
+}
+
+func marshalLPKVs(m map[string]string) ([]byte, error) {
+	var buf bytes.Buffer
+	for k, v := range m {
+		if err := writeLPString(&buf, k); err != nil {
+			return nil, err
+		}
+		if err := writeLPString(&buf, v); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
 // readLPString returns a length-prefixed string as seen in ProductAccount.Attrs.
-func readLPString(rd *bytes.Reader) (string, error) {
-	strLen, err := rd.ReadByte()
+func readLPString(rd *bytes.Reader) (s string, n int, err error) {
+	var strLen byte
+	strLen, err = rd.ReadByte()
 	if err != nil {
-		return "", err
+		return
 	}
 	val := make([]byte, strLen)
-	if _, err := rd.Read(val); err != nil {
-		return "", err
+	n, err = rd.Read(val)
+	n += 1
+	s = string(val)
+	return
+}
+
+// writeLPString writes a length-prefixed string as seen in ProductAccount.Attrs.
+func writeLPString(wr io.Writer, s string) error {
+	if len(s) > 0xFF {
+		return fmt.Errorf("string too long (%d)", len(s))
 	}
-	return string(val), nil
+	if _, err := wr.Write([]byte{uint8(len(s))}); err != nil {
+		return err
+	}
+	_, err := wr.Write([]byte(s))
+	return err
 }
 
 // ProductAccount contains metadata for a single product,
@@ -98,28 +144,14 @@ func (p *ProductAccount) UnmarshalBinary(buf []byte) error {
 
 // GetAttrs returns the parsed set of key-value pairs.
 func (p *ProductAccount) GetAttrs() (map[string]string, error) {
-	kvps := make(map[string]string)
-
 	attrs := p.Attrs[:]
 	maxSize := int(p.Size) - 48
 	if maxSize > 0 && len(attrs) > maxSize {
 		attrs = attrs[:maxSize]
 	}
-
 	rd := bytes.NewReader(attrs)
-	for rd.Len() > 0 {
-		key, err := readLPString(rd)
-		if err != nil {
-			return kvps, err
-		}
-		val, err := readLPString(rd)
-		if err != nil {
-			return kvps, err
-		}
-		kvps[key] = val
-	}
-
-	return kvps, nil
+	out, _, err := unmarshalLPKVs(rd)
+	return out, err
 }
 
 // Ema is an exponentially-weighted moving average.
