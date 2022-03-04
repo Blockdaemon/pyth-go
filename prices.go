@@ -43,7 +43,7 @@ func (c *Client) StreamPriceAccounts(ctx context.Context, updates chan<- PriceAc
 		default:
 			return err
 		}
-	}, backoff.NewConstantBackOff(retryInterval))
+	}, backoff.WithContext(backoff.NewConstantBackOff(retryInterval), ctx))
 }
 
 func (c *Client) streamPriceAccounts(ctx context.Context, updates chan<- PriceAccountUpdate) error {
@@ -52,6 +52,12 @@ func (c *Client) streamPriceAccounts(ctx context.Context, updates chan<- PriceAc
 		return err
 	}
 	defer client.Close()
+
+	// Make sure client cannot outlive context.
+	go func() {
+		defer client.Close()
+		<-ctx.Done()
+	}()
 
 	metricsWsActiveConns.Inc()
 	defer metricsWsActiveConns.Dec()
