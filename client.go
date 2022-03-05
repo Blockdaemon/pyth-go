@@ -21,14 +21,21 @@ import (
 )
 
 // Client interacts with Pyth via Solana's JSON-RPC API.
+//
+// Do not instantiate Client directly, use NewClient instead.
 type Client struct {
-	Opts
-
-	Log          *zap.Logger
+	ProgramKey   solana.PublicKey
 	RPC          *rpc.Client
 	WebSocketURL string
+	Log          *zap.Logger
 }
 
-type Opts struct {
-	ProgramKey solana.PublicKey
+// NewClient creates a new client to the Pyth on-chain program.
+func NewClient(programKey solana.PublicKey, rpcURL string, wsURL string) *Client {
+	return &Client{
+		ProgramKey:   programKey,
+		RPC:          rpc.New(rpcURL),
+		WebSocketURL: wsURL,
+		Log:          zap.NewNop(),
+	}
 }

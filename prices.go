@@ -13,8 +13,8 @@ import (
 )
 
 // GetPriceAccount retrieves a price account from the blockchain.
-func (c *Client) GetPriceAccount(ctx context.Context, productKey solana.PublicKey) (*PriceAccount, error) {
-	accountInfo, err := c.RPC.GetAccountInfo(ctx, productKey)
+func (c *Client) GetPriceAccount(ctx context.Context, priceKey solana.PublicKey) (*PriceAccount, error) {
+	accountInfo, err := c.RPC.GetAccountInfo(ctx, priceKey)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *Client) streamPriceAccounts(ctx context.Context, updates chan<- PriceAc
 	defer metricsWsActiveConns.Dec()
 
 	sub, err := client.ProgramSubscribeWithOpts(
-		c.Opts.ProgramKey,
+		c.ProgramKey,
 		rpc.CommitmentConfirmed,
 		solana.EncodingBase64Zstd,
 		[]rpc.RPCFilter{
@@ -117,7 +117,7 @@ func (c *Client) readNextUpdate(
 	metricsWsEventsTotal.Inc()
 
 	// Decode update.
-	if update.Value.Account.Owner != c.Opts.ProgramKey {
+	if update.Value.Account.Owner != c.ProgramKey {
 		return nil
 	}
 	accountData := update.Value.Account.Data.GetBinary()
