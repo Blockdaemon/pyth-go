@@ -36,8 +36,12 @@ var (
 	caseAddPrice []byte
 	//go:embed tests/instruction/upd_price.bin
 	caseUpdPrice []byte
-	//go:embed tests/instruction/upd_price_no_fail_on_error.bin
-	caseUpdPriceNoFailOnError []byte
+	//go:embed tests/instruction/add_publisher.bin
+	caseAddPublisher []byte
+	//go:embed tests/instruction/del_publisher.bin
+	caseDelPublisher []byte
+	//go:embed tests/instruction/set_min_pub.bin
+	caseSetMinPub []byte
 )
 
 func TestInstruction_InitMapping(t *testing.T) {
@@ -170,6 +174,7 @@ func TestInstruction_UpdProduct(t *testing.T) {
 
 	data, err := actualIns.Data()
 	assert.NoError(t, err)
+	// no length check since product update is arbitrary length
 	require.Equal(t, caseUpdProduct, data)
 
 	rebuiltIns := NewInstructionBuilder(program).UpdProduct(
@@ -205,6 +210,7 @@ func TestInstruction_AddPrice(t *testing.T) {
 
 	data, err := actualIns.Data()
 	assert.NoError(t, err)
+	assert.Len(t, data, 16)
 	require.Equal(t, caseAddPrice, data)
 
 	rebuiltIns := NewInstructionBuilder(program).AddPrice(
@@ -212,6 +218,74 @@ func TestInstruction_AddPrice(t *testing.T) {
 		accs[1].PublicKey,
 		accs[2].PublicKey,
 		*actualIns.Payload.(*CommandAddPrice),
+	)
+	assert.Equal(t, actualIns, rebuiltIns)
+}
+
+func TestInstruction_AddPublisher(t *testing.T) {
+	var program = ProgramIDDevnet
+	var accs = []*solana.AccountMeta{
+		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
+		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
+	}
+
+	actualIns, err := DecodeInstruction(program, accs, caseAddPublisher)
+	require.NoError(t, err)
+
+	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, accs, actualIns.Accounts())
+	assert.Equal(t, CommandHeader{
+		Version: V2,
+		Cmd:     Instruction_AddPublisher,
+	}, actualIns.Header)
+	assert.Equal(t, "add_publisher", InstructionIDToName(actualIns.Header.Cmd))
+	assert.Equal(t, &CommandAddPublisher{
+		Publisher: solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy"),
+	}, actualIns.Payload)
+
+	data, err := actualIns.Data()
+	assert.NoError(t, err)
+	assert.Len(t, data, 40)
+	require.Equal(t, caseAddPublisher, data)
+
+	rebuiltIns := NewInstructionBuilder(program).AddPublisher(
+		accs[0].PublicKey,
+		accs[1].PublicKey,
+		*actualIns.Payload.(*CommandAddPublisher),
+	)
+	assert.Equal(t, actualIns, rebuiltIns)
+}
+
+func TestInstruction_DelPublisher(t *testing.T) {
+	var program = ProgramIDDevnet
+	var accs = []*solana.AccountMeta{
+		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
+		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
+	}
+
+	actualIns, err := DecodeInstruction(program, accs, caseDelPublisher)
+	require.NoError(t, err)
+
+	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, accs, actualIns.Accounts())
+	assert.Equal(t, CommandHeader{
+		Version: V2,
+		Cmd:     Instruction_DelPublisher,
+	}, actualIns.Header)
+	assert.Equal(t, "del_publisher", InstructionIDToName(actualIns.Header.Cmd))
+	assert.Equal(t, &CommandDelPublisher{
+		Publisher: solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy"),
+	}, actualIns.Payload)
+
+	data, err := actualIns.Data()
+	assert.NoError(t, err)
+	assert.Len(t, data, 40)
+	require.Equal(t, caseDelPublisher, data)
+
+	rebuiltIns := NewInstructionBuilder(program).DelPublisher(
+		accs[0].PublicKey,
+		accs[1].PublicKey,
+		*actualIns.Payload.(*CommandDelPublisher),
 	)
 	assert.Equal(t, actualIns, rebuiltIns)
 }
@@ -255,41 +329,67 @@ func TestInstruction_UpdPrice(t *testing.T) {
 	assert.Equal(t, actualIns, rebuiltIns)
 }
 
-func TestInstruction_UpdPriceNoFailOnError(t *testing.T) {
+func TestInstruction_SetMinPub(t *testing.T) {
 	var program = ProgramIDDevnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("5U3bH5b6XtG99aVWLqwVzYPVpQiFHytBD68Rz2eFPZd7")).SIGNER().WRITE(),
-		solana.Meta(solana.MustPublicKeyFromBase58("EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw")).WRITE(),
-		solana.Meta(solana.SysVarClockPubkey),
+		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseUpdPriceNoFailOnError)
+	actualIns, err := DecodeInstruction(program, accs, caseSetMinPub)
 	require.NoError(t, err)
 
 	assert.Equal(t, program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
-		Cmd:     Instruction_UpdPriceNoFailOnError,
+		Cmd:     Instruction_SetMinPub,
 	}, actualIns.Header)
-	assert.Equal(t, "upd_price_no_fail_on_error", InstructionIDToName(actualIns.Header.Cmd))
-	require.Equal(t, &CommandUpdPrice{
-		Status:  PriceStatusTrading,
-		Unused:  0,
-		Price:   261253500000,
-		Conf:    120500000,
-		PubSlot: 118774432,
+	assert.Equal(t, "set_min_pub", InstructionIDToName(actualIns.Header.Cmd))
+	require.Equal(t, &CommandSetMinPub{
+		MinPub:  69,
+		Padding: [...]byte{0, 0, 0},
 	}, actualIns.Payload)
 
 	data, err := actualIns.Data()
 	assert.NoError(t, err)
-	assert.Len(t, data, 40)
-	require.Equal(t, caseUpdPriceNoFailOnError, data)
+	assert.Len(t, data, 12)
+	require.Equal(t, caseSetMinPub, data)
 
-	rebuiltIns := NewInstructionBuilder(program).UpdPriceNoFailOnError(
+	rebuiltIns := NewInstructionBuilder(program).SetMinPub(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
-		*actualIns.Payload.(*CommandUpdPrice),
+		*actualIns.Payload.(*CommandSetMinPub),
 	)
 	assert.Equal(t, actualIns, rebuiltIns)
+}
+
+func TestInstruction_WrongVersion(t *testing.T) {
+	var program = ProgramIDDevnet
+	var accs = []*solana.AccountMeta{
+		solana.Meta(solana.MustPublicKeyFromBase58("5U3bH5b6XtG99aVWLqwVzYPVpQiFHytBD68Rz2eFPZd7")).SIGNER().WRITE(),
+		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
+	}
+
+	actualIns, err := DecodeInstruction(program, accs, []byte{
+		0x03, 0x00, 0x00, 0x00, // version
+		0x00, 0x00, 0x00, 0x00, // instruction type
+	})
+	require.EqualError(t, err, "not a valid Pyth instruction")
+	assert.Nil(t, actualIns)
+}
+
+func TestInstruction_Unsupported(t *testing.T) {
+	var program = ProgramIDDevnet
+	var accs = []*solana.AccountMeta{
+		solana.Meta(solana.MustPublicKeyFromBase58("5U3bH5b6XtG99aVWLqwVzYPVpQiFHytBD68Rz2eFPZd7")).SIGNER().WRITE(),
+		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
+	}
+
+	actualIns, err := DecodeInstruction(program, accs, []byte{
+		0x02, 0x00, 0x00, 0x00, // version
+		0xfe, 0xff, 0x00, 0x00, // instruction type
+	})
+	require.EqualError(t, err, "not a valid Pyth instruction")
+	assert.Nil(t, actualIns)
 }

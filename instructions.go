@@ -53,7 +53,6 @@ const (
 	Instruction_AddPublisher
 	Instruction_DelPublisher
 	Instruction_UpdPrice
-	Instruction_UpdPriceNoFailOnError
 	Instruction_AggPrice
 	Instruction_InitPrice
 	Instruction_InitTest
@@ -81,8 +80,6 @@ func InstructionIDToName(id int32) string {
 		return "del_publisher"
 	case Instruction_UpdPrice:
 		return "upd_price"
-	case Instruction_UpdPriceNoFailOnError:
-		return "upd_price_no_fail_on_error"
 	case Instruction_AggPrice:
 		return "agg_price"
 	case Instruction_InitPrice:
@@ -175,7 +172,8 @@ type CommandInitPrice struct {
 
 // CommandSetMinPub is the payload of Instruction_SetMinPub.
 type CommandSetMinPub struct {
-	MinPub uint8
+	MinPub  uint8
+	Padding [3]byte
 }
 
 // CommandAddPublisher is the payload of Instruction_AddPublisher.
@@ -258,9 +256,6 @@ func DecodeInstruction(
 		impl = new(CommandDelPublisher)
 		numAccounts = 2
 	case Instruction_UpdPrice:
-		impl = new(CommandUpdPrice)
-		numAccounts = 3
-	case Instruction_UpdPriceNoFailOnError:
 		impl = new(CommandUpdPrice)
 		numAccounts = 3
 	case Instruction_AggPrice:
