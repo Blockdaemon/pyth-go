@@ -15,7 +15,6 @@
 package pyth
 
 import (
-	"bytes"
 	"errors"
 
 	bin "github.com/gagliardetto/binary"
@@ -60,25 +59,12 @@ func PeekAccount(data []byte) uint32 {
 	return header.AccountType
 }
 
-// readLPString returns a length-prefixed string as seen in ProductAccount.Attrs.
-func readLPString(rd *bytes.Reader) (string, error) {
-	strLen, err := rd.ReadByte()
-	if err != nil {
-		return "", err
-	}
-	val := make([]byte, strLen)
-	if _, err := rd.Read(val); err != nil {
-		return "", err
-	}
-	return string(val), nil
-}
-
 // ProductAccount contains metadata for a single product,
 // such as its symbol and its base/quote currencies.
 type ProductAccount struct {
 	AccountHeader
 	FirstPrice solana.PublicKey // first price account in list
-	Attrs      [464]byte        // key-value string pairs of additional data
+	AttrsData  [464]byte        // key-value string pairs of additional data
 }
 
 // UnmarshalBinary decodes the product account from the on-chain format.
@@ -96,30 +82,18 @@ func (p *ProductAccount) UnmarshalBinary(buf []byte) error {
 	return nil
 }
 
-// GetAttrs returns the parsed set of key-value pairs.
-func (p *ProductAccount) GetAttrs() (map[string]string, error) {
-	kvps := make(map[string]string)
-
-	attrs := p.Attrs[:]
+// GetAttrsMap returns the parsed set of key-value pairs.
+func (p *ProductAccount) GetAttrsMap() (AttrsMap, error) {
+	// Length of attrs is determined by size value in header.
+	data := p.AttrsData[:]
 	maxSize := int(p.Size) - 48
-	if maxSize > 0 && len(attrs) > maxSize {
-		attrs = attrs[:maxSize]
+	if maxSize > 0 && len(data) > maxSize {
+		data = data[:maxSize]
 	}
-
-	rd := bytes.NewReader(attrs)
-	for rd.Len() > 0 {
-		key, err := readLPString(rd)
-		if err != nil {
-			return kvps, err
-		}
-		val, err := readLPString(rd)
-		if err != nil {
-			return kvps, err
-		}
-		kvps[key] = val
-	}
-
-	return kvps, nil
+	// Unmarshal attrs.
+	var attrs AttrsMap
+	err := attrs.UnmarshalBinary(data)
+	return attrs, err
 }
 
 // Ema is an exponentially-weighted moving average.
@@ -139,6 +113,14 @@ type PriceInfo struct {
 	CorpAct uint32
 	PubSlot uint64 // valid publishing slot
 }
+
+// Price status.
+const (
+	PriceStatusUnknown = uint32(iota)
+	PriceStatusTrading
+	PriceStatusHalted
+	PriceStatusAuction
+)
 
 // PriceComp contains the price and confidence contributed by a specific publisher.
 type PriceComp struct {
