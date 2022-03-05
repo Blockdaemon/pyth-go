@@ -1,3 +1,17 @@
+//  Copyright 2022 Blockdaemon Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package pyth
 
 import (
@@ -80,9 +94,9 @@ func TestInstruction_UpdPriceNoFailOnError(t *testing.T) {
 
 	data, err := actualIns.Data()
 	assert.NoError(t, err)
-	require.Equal(t, caseUpdPrice, data)
+	require.Equal(t, caseUpdPriceNoFailOnError, data)
 
-	rebuiltIns := NewInstructionBuilder(program).UpdPrice(
+	rebuiltIns := NewInstructionBuilder(program).UpdPriceNoFailOnError(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		*actualIns.Payload.(*CommandUpdPrice),

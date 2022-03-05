@@ -15,10 +15,7 @@
 package pyth
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
-	"io"
 
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
@@ -62,69 +59,12 @@ func PeekAccount(data []byte) uint32 {
 	return header.AccountType
 }
 
-func unmarshalLPKVs(rd *bytes.Reader) (out map[string]string, n int, err error) {
-	kvps := make(map[string]string)
-	for rd.Len() > 0 {
-		key, n2, err := readLPString(rd)
-		if err != nil {
-			return kvps, n, err
-		}
-		n += n2
-		val, n3, err := readLPString(rd)
-		if err != nil {
-			return kvps, n, err
-		}
-		n += n3
-		kvps[key] = val
-	}
-	return kvps, n, nil
-}
-
-func marshalLPKVs(m map[string]string) ([]byte, error) {
-	var buf bytes.Buffer
-	for k, v := range m {
-		if err := writeLPString(&buf, k); err != nil {
-			return nil, err
-		}
-		if err := writeLPString(&buf, v); err != nil {
-			return nil, err
-		}
-	}
-	return buf.Bytes(), nil
-}
-
-// readLPString returns a length-prefixed string as seen in ProductAccount.Attrs.
-func readLPString(rd *bytes.Reader) (s string, n int, err error) {
-	var strLen byte
-	strLen, err = rd.ReadByte()
-	if err != nil {
-		return
-	}
-	val := make([]byte, strLen)
-	n, err = rd.Read(val)
-	n += 1
-	s = string(val)
-	return
-}
-
-// writeLPString writes a length-prefixed string as seen in ProductAccount.Attrs.
-func writeLPString(wr io.Writer, s string) error {
-	if len(s) > 0xFF {
-		return fmt.Errorf("string too long (%d)", len(s))
-	}
-	if _, err := wr.Write([]byte{uint8(len(s))}); err != nil {
-		return err
-	}
-	_, err := wr.Write([]byte(s))
-	return err
-}
-
 // ProductAccount contains metadata for a single product,
 // such as its symbol and its base/quote currencies.
 type ProductAccount struct {
 	AccountHeader
 	FirstPrice solana.PublicKey // first price account in list
-	Attrs      [464]byte        // key-value string pairs of additional data
+	AttrsData  [464]byte        // key-value string pairs of additional data
 }
 
 // UnmarshalBinary decodes the product account from the on-chain format.
@@ -142,16 +82,18 @@ func (p *ProductAccount) UnmarshalBinary(buf []byte) error {
 	return nil
 }
 
-// GetAttrs returns the parsed set of key-value pairs.
-func (p *ProductAccount) GetAttrs() (map[string]string, error) {
-	attrs := p.Attrs[:]
+// GetAttrsMap returns the parsed set of key-value pairs.
+func (p *ProductAccount) GetAttrsMap() (AttrsMap, error) {
+	// Length of attrs is determined by size value in header.
+	data := p.AttrsData[:]
 	maxSize := int(p.Size) - 48
-	if maxSize > 0 && len(attrs) > maxSize {
-		attrs = attrs[:maxSize]
+	if maxSize > 0 && len(data) > maxSize {
+		data = data[:maxSize]
 	}
-	rd := bytes.NewReader(attrs)
-	out, _, err := unmarshalLPKVs(rd)
-	return out, err
+	// Unmarshal attrs.
+	var attrs AttrsMap
+	err := attrs.UnmarshalBinary(data)
+	return attrs, err
 }
 
 // Ema is an exponentially-weighted moving average.

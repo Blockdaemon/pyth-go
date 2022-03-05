@@ -41,7 +41,7 @@ func TestProductAccount(t *testing.T) {
 			Size:        161,
 		},
 		FirstPrice: solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh"),
-		Attrs: [464]byte{
+		AttrsData: [464]byte{
 			0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x0a,
 			0x46, 0x58, 0x2e, 0x45, 0x55, 0x52, 0x2f, 0x55,
 			0x53, 0x44, 0x0a, 0x61, 0x73, 0x73, 0x65, 0x74,
@@ -78,8 +78,9 @@ func TestProductAccount(t *testing.T) {
 			"symbol":         "FX.EUR/USD",
 			"tenor":          "Spot",
 		}
-		actual, err := actual.GetAttrs()
+		actualList, err := actual.GetAttrsMap()
 		assert.NoError(t, err)
+		actual := actualList.KVs()
 		assert.Equal(t, expected, actual)
 	})
 }

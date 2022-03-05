@@ -62,6 +62,7 @@ const (
 	instruction_count // number of different instruction types
 )
 
+// InstructionIDToName returns a human-readable name of a Pyth instruction type.
 func InstructionIDToName(id int32) string {
 	switch id {
 	case Instruction_InitMapping:
@@ -137,11 +138,13 @@ func (inst *Instruction) Data() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// CommandHeader is an 8-byte header at the beginning any instruction data.
 type CommandHeader struct {
-	Version uint32
+	Version uint32 // currently V2
 	Cmd     int32
 }
 
+// Valid performs basic checks on instruction data.
 func (h *CommandHeader) Valid() bool {
 	return h.Version == V2 && h.Cmd >= 0 && h.Cmd < instruction_count
 }
@@ -153,48 +156,39 @@ func makeCommandHeader(cmd int32) CommandHeader {
 	}
 }
 
+// CommandUpdProduct is the payload of Instruction_UpdProduct.
 type CommandUpdProduct struct {
 	Attrs map[string]string
 }
 
-func (c *CommandUpdProduct) UnmarshalBinary(data []byte) (err error) {
-	var n int
-	c.Attrs, n, err = unmarshalLPKVs(bytes.NewReader(data))
-	if err != nil {
-		return err
-	}
-	if n != len(data) {
-		return fmt.Errorf("unmarshalLPKVs: expected %d bytes got %d", len(data), n)
-	}
-	return nil
-}
-
-func (c *CommandUpdProduct) MarshalBinary() ([]byte, error) {
-	return marshalLPKVs(c.Attrs)
-}
-
+// CommandAddPrice is the payload of Instruction_AddPrice.
 type CommandAddPrice struct {
 	Exponent  int32
 	PriceType uint32
 }
 
+// CommandInitPrice is the payload of Instruction_InitPrice.
 type CommandInitPrice struct {
 	Exponent  int32
 	PriceType uint32
 }
 
+// CommandSetMinPub is the payload of Instruction_SetMinPub.
 type CommandSetMinPub struct {
 	MinPub uint8
 }
 
+// CommandAddPublisher is the payload of Instruction_AddPublisher.
 type CommandAddPublisher struct {
 	Publisher solana.PublicKey
 }
 
+// CommandDelPublisher is the payload of Instruction_DelPublisher.
 type CommandDelPublisher struct {
 	Publisher solana.PublicKey
 }
 
+// CommandUpdPrice is the payload of Instruction_UpdPrice or Instruction_UpdPriceNoFailOnError.
 type CommandUpdPrice struct {
 	Status  uint32
 	Unused  uint32
@@ -203,6 +197,7 @@ type CommandUpdPrice struct {
 	PubSlot uint64
 }
 
+// CommandUpdTest is the payload Instruction_UpdTest.
 type CommandUpdTest struct {
 	Exponent int32
 	SlotDiff [32]int8
@@ -216,6 +211,16 @@ func newInstructionDecoder(programKey solana.PublicKey) func(accounts []*solana.
 	}
 }
 
+// DecodeInstruction attempts to reconstruct a Pyth command from an on-chain instruction.
+//
+// Security
+//
+// Please note that this function may behave differently than the Pyth on-chain program.
+// Especially edge cases and invalid input is handled according to "best effort".
+//
+// This function also performs no account ownership nor permission checks.
+//
+// It is best to only use this instruction on successful program executions.
 func DecodeInstruction(
 	programKey solana.PublicKey,
 	accounts []*solana.AccountMeta,
