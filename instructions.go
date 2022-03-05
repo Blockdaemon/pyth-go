@@ -23,10 +23,18 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
+// Program IDs of the Pyth oracle program.
 var (
-	ProgramIDDevnet  = solana.MustPublicKeyFromBase58("")
-	ProgramIDTestnet = solana.MustPublicKeyFromBase58("")
-	ProgramIDMainnet = solana.MustPublicKeyFromBase58("")
+	ProgramIDDevnet  = solana.MustPublicKeyFromBase58("gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s")
+	ProgramIDTestnet = solana.MustPublicKeyFromBase58("8tfDNiaEyrV6Q1U4DEXrEigs9DoDtkugzFbybENEbCDz")
+	ProgramIDMainnet = solana.MustPublicKeyFromBase58("FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH")
+)
+
+// Root mapping account IDs listing the products in the Pyth oracle program.
+var (
+	MappingKeyDevnet  = solana.MustPublicKeyFromBase58("BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2")
+	MappingKeyTestnet = solana.MustPublicKeyFromBase58("AFmdnt9ng1uVxqCmqwQJDAYC5cKTkw8gJKSM5PnzuF6z")
+	MappingKeyMainnet = solana.MustPublicKeyFromBase58("AHtgzX45WTKfkPG53L6WYhGEXwQkN1BVknET3sVsLL8J")
 )
 
 func init() {
