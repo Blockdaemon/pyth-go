@@ -8,10 +8,12 @@ import (
 
 // AttrsMap is a list of string key-value pairs with stable order.
 type AttrsMap struct {
-	kvps [][2]string
+	Pairs [][2]string
 }
 
 // NewAttrsMap returns a new attribute map with an initial arbitrary order.
+//
+// The provided Go map may be nil.
 func NewAttrsMap(fromGo map[string]string) (out AttrsMap, err error) {
 	for k, v := range fromGo {
 		if len(k) > 0xFF {
@@ -20,15 +22,15 @@ func NewAttrsMap(fromGo map[string]string) (out AttrsMap, err error) {
 		if len(v) > 0xFF {
 			return out, fmt.Errorf("value too long (%d > 0xFF): \"%s\"", len(v), v)
 		}
-		out.kvps = append(out.kvps, [2]string{k, v})
+		out.Pairs = append(out.Pairs, [2]string{k, v})
 	}
 	return
 }
 
 // KVs returns the AttrsMap as an unordered Go map.
 func (a AttrsMap) KVs() map[string]string {
-	m := make(map[string]string, len(a.kvps))
-	for _, kv := range a.kvps {
+	m := make(map[string]string, len(a.Pairs))
+	for _, kv := range a.Pairs {
 		m[kv[0]] = kv[1]
 	}
 	return m
@@ -56,7 +58,7 @@ func ReadAttrsMapFromBinary(rd *bytes.Reader) (out AttrsMap, n int, err error) {
 			return out, n, err
 		}
 		n += n3
-		out.kvps = append(out.kvps, [2]string{key, val})
+		out.Pairs = append(out.Pairs, [2]string{key, val})
 	}
 	return out, n, nil
 }
@@ -64,7 +66,7 @@ func ReadAttrsMapFromBinary(rd *bytes.Reader) (out AttrsMap, n int, err error) {
 // MarshalBinary marshals AttrsMap to its on-chain format.
 func (a AttrsMap) MarshalBinary() ([]byte, error) {
 	var buf bytes.Buffer
-	for _, kv := range a.kvps {
+	for _, kv := range a.Pairs {
 		if err := writeLPString(&buf, kv[0]); err != nil {
 			return nil, err
 		}

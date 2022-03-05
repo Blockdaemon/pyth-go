@@ -65,10 +65,9 @@ func TestProductAccount(t *testing.T) {
 
 	var actual ProductAccount
 	require.NoError(t, actual.UnmarshalBinary(caseProductAccount))
-
 	assert.Equal(t, &expected, &actual)
 
-	t.Run("GetAttrs", func(t *testing.T) {
+	t.Run("GetAttrsMap", func(t *testing.T) {
 		expected := map[string]string{
 			"asset_type":     "FX",
 			"base":           "EUR",

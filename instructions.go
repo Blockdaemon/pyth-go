@@ -158,7 +158,7 @@ func makeCommandHeader(cmd int32) CommandHeader {
 
 // CommandUpdProduct is the payload of Instruction_UpdProduct.
 type CommandUpdProduct struct {
-	Attrs map[string]string
+	AttrsMap
 }
 
 // CommandAddPrice is the payload of Instruction_AddPrice.
@@ -247,7 +247,7 @@ func DecodeInstruction(
 		numAccounts = 3
 	case Instruction_UpdProduct:
 		impl = new(CommandUpdProduct)
-		numAccounts = 3
+		numAccounts = 2
 	case Instruction_AddPrice:
 		impl = new(CommandAddPrice)
 		numAccounts = 3
