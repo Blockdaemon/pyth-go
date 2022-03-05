@@ -1,9 +1,13 @@
 <div align="center">
   <h1>Pyth Network Go client</h1>
   <p>
-    <strong>Access high-fidelity market data on Solana, now in Go</strong>
+    <strong>Access high-fidelity market data on Solana</strong>
   </p>
-  <sub>Built with Go and 👿 at <a href="https://blockdaemon.com">Blockdaemon</a></sub>
+  <p>
+    <a href="https://pkg.go.dev/go.blockdaemon.com/pyth"><img src="https://pkg.go.dev/badge/go.blockdaemon.com/pyth.svg" alt="Go Reference"></a>
+    <a href="https://github.com/Blockdaemon/pyth-go/actions/workflows/test.yml"><img src="https://github.com/Blockdaemon/pyth-go/actions/workflows/test.yml/badge.svg" alt="unit tests"></a>
+  </p>
+  <sub>Built with 👿 at <a href="https://blockdaemon.com">Blockdaemon</a></sub>
 </div>
 
 ### Summary
