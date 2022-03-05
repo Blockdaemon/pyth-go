@@ -13,16 +13,14 @@ type AttrsMap struct {
 
 // NewAttrsMap returns a new attribute map with an initial arbitrary order.
 func NewAttrsMap(fromGo map[string]string) (out AttrsMap, err error) {
-	if fromGo != nil {
-		for k, v := range fromGo {
-			if len(k) > 0xFF {
-				return out, fmt.Errorf("key too long (%d > 0xFF): \"%s\"", len(k), k)
-			}
-			if len(v) > 0xFF {
-				return out, fmt.Errorf("value too long (%d > 0xFF): \"%s\"", len(v), v)
-			}
-			out.kvps = append(out.kvps, [2]string{k, v})
+	for k, v := range fromGo {
+		if len(k) > 0xFF {
+			return out, fmt.Errorf("key too long (%d > 0xFF): \"%s\"", len(k), k)
 		}
+		if len(v) > 0xFF {
+			return out, fmt.Errorf("value too long (%d > 0xFF): \"%s\"", len(v), v)
+		}
+		out.kvps = append(out.kvps, [2]string{k, v})
 	}
 	return
 }
