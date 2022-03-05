@@ -24,11 +24,11 @@ import (
 )
 
 var (
-	//go:embed tests/EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko.bin
+	//go:embed tests/product_account/EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko.bin
 	caseProductAccount []byte
-	//go:embed tests/E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh.bin
+	//go:embed tests/price_account/E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh.bin
 	casePriceAccount []byte
-	//go:embed tests/BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2.bin
+	//go:embed tests/mapping_account/BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2.bin
 	caseMappingAccount []byte
 )
 
