@@ -100,8 +100,9 @@ func InstructionIDToName(id int32) string {
 type Instruction struct {
 	programKey solana.PublicKey
 	accounts   solana.AccountMetaSlice
-	header     CommandHeader
-	impl       interface{}
+
+	Header  CommandHeader
+	Payload interface{}
 }
 
 func (inst *Instruction) ProgramID() solana.PublicKey {
@@ -115,21 +116,21 @@ func (inst *Instruction) Accounts() []*solana.AccountMeta {
 func (inst *Instruction) Data() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := bin.NewBinEncoder(buf)
-	if err := enc.Encode(&inst.header); err != nil {
+	if err := enc.Encode(&inst.Header); err != nil {
 		return nil, fmt.Errorf("failed to encode header: %w", err)
 	}
-	if inst.impl != nil {
-		if customMarshal, ok := inst.impl.(encoding.BinaryMarshaler); ok {
+	if inst.Payload != nil {
+		if customMarshal, ok := inst.Payload.(encoding.BinaryMarshaler); ok {
 			buf2, err := customMarshal.MarshalBinary()
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal %s payload: %w",
-					InstructionIDToName(inst.header.Cmd), err)
+					InstructionIDToName(inst.Header.Cmd), err)
 			}
 			buf.Write(buf2)
 		} else {
-			if err := enc.Encode(inst.impl); err != nil {
+			if err := enc.Encode(inst.Payload); err != nil {
 				return nil, fmt.Errorf("failed to encode %s payload: %w",
-					InstructionIDToName(inst.header.Cmd), err)
+					InstructionIDToName(inst.Header.Cmd), err)
 			}
 		}
 	}
@@ -303,7 +304,7 @@ func DecodeInstruction(
 	return &Instruction{
 		programKey: programKey,
 		accounts:   accounts,
-		header:     hdr,
-		impl:       impl,
+		Header:     hdr,
+		Payload:    impl,
 	}, nil
 }

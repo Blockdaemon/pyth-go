@@ -33,7 +33,7 @@ func (i *InstructionBuilder) InitMapping(
 ) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_InitMapping),
+		Header:     makeCommandHeader(Instruction_InitMapping),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(mappingKey).SIGNER().WRITE(),
@@ -49,7 +49,7 @@ func (i *InstructionBuilder) AddMapping(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_AddMapping),
+		Header:     makeCommandHeader(Instruction_AddMapping),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(tailMappingKey).SIGNER().WRITE(),
@@ -66,7 +66,7 @@ func (i *InstructionBuilder) AddProduct(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_AddProduct),
+		Header:     makeCommandHeader(Instruction_AddProduct),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(mappingKey).SIGNER().WRITE(),
@@ -83,12 +83,12 @@ func (i *InstructionBuilder) UpdProduct(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_UpdProduct),
+		Header:     makeCommandHeader(Instruction_UpdProduct),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(productKey).SIGNER().WRITE(),
 		},
-		impl: &payload,
+		Payload: &payload,
 	}
 }
 
@@ -101,13 +101,13 @@ func (i *InstructionBuilder) AddPrice(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_AddPrice),
+		Header:     makeCommandHeader(Instruction_AddPrice),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(productKey).SIGNER().WRITE(),
 			solana.Meta(priceKey).SIGNER().WRITE(),
 		},
-		impl: &payload,
+		Payload: &payload,
 	}
 }
 
@@ -119,12 +119,12 @@ func (i *InstructionBuilder) AddPublisher(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_AddPublisher),
+		Header:     makeCommandHeader(Instruction_AddPublisher),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(priceKey).SIGNER().WRITE(),
 		},
-		impl: &payload,
+		Payload: &payload,
 	}
 }
 
@@ -136,30 +136,30 @@ func (i *InstructionBuilder) DelPublisher(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_DelPublisher),
+		Header:     makeCommandHeader(Instruction_DelPublisher),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(priceKey).SIGNER().WRITE(),
 		},
-		impl: &payload,
+		Payload: &payload,
 	}
 }
 
 func (i *InstructionBuilder) updPrice(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
-	payload CommandDelPublisher,
+	payload CommandUpdPrice,
 	commandID int32,
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(commandID),
+		Header:     makeCommandHeader(commandID),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(priceKey).WRITE(),
 			solana.Meta(solana.SysVarClockPubkey),
 		},
-		impl: &payload,
+		Payload: &payload,
 	}
 }
 
@@ -167,7 +167,7 @@ func (i *InstructionBuilder) updPrice(
 func (i *InstructionBuilder) UpdPrice(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
-	payload CommandDelPublisher,
+	payload CommandUpdPrice,
 ) solana.Instruction {
 	return i.updPrice(fundingKey, priceKey, payload, Instruction_UpdPrice)
 }
@@ -176,7 +176,7 @@ func (i *InstructionBuilder) UpdPrice(
 func (i *InstructionBuilder) UpdPriceNoFailOnError(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
-	payload CommandDelPublisher,
+	payload CommandUpdPrice,
 ) solana.Instruction {
 	return i.updPrice(fundingKey, priceKey, payload, Instruction_UpdPriceNoFailOnError)
 }
@@ -188,7 +188,7 @@ func (i *InstructionBuilder) AggPrice(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_AggPrice),
+		Header:     makeCommandHeader(Instruction_AggPrice),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(priceKey).WRITE(),
@@ -205,12 +205,12 @@ func (i *InstructionBuilder) InitPrice(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_InitPrice),
+		Header:     makeCommandHeader(Instruction_InitPrice),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(priceKey).SIGNER().WRITE(),
 		},
-		impl: &payload,
+		Payload: &payload,
 	}
 }
 
@@ -221,7 +221,7 @@ func (i *InstructionBuilder) InitTest(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_InitTest),
+		Header:     makeCommandHeader(Instruction_InitTest),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(testKey).SIGNER().WRITE(),
@@ -237,12 +237,12 @@ func (i *InstructionBuilder) UpdTest(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_UpdTest),
+		Header:     makeCommandHeader(Instruction_UpdTest),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(testKey).SIGNER().WRITE(),
 		},
-		impl: &payload,
+		Payload: &payload,
 	}
 }
 
@@ -254,11 +254,11 @@ func (i *InstructionBuilder) SetMinPub(
 ) solana.Instruction {
 	return &Instruction{
 		programKey: i.programKey,
-		header:     makeCommandHeader(Instruction_SetMinPub),
+		Header:     makeCommandHeader(Instruction_SetMinPub),
 		accounts: []*solana.AccountMeta{
 			solana.Meta(fundingKey).SIGNER().WRITE(),
 			solana.Meta(priceKey).SIGNER().WRITE(),
 		},
-		impl: &payload,
+		Payload: &payload,
 	}
 }

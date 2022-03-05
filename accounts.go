@@ -172,6 +172,14 @@ type PriceInfo struct {
 	PubSlot uint64 // valid publishing slot
 }
 
+// Price status.
+const (
+	PriceStatusUnknown = uint32(iota)
+	PriceStatusTrading
+	PriceStatusHalted
+	PriceStatusAuction
+)
+
 // PriceComp contains the price and confidence contributed by a specific publisher.
 type PriceComp struct {
 	Publisher solana.PublicKey // key of contributing publisher
