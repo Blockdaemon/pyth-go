@@ -17,7 +17,6 @@ package pyth
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
@@ -61,88 +60,74 @@ func PeekAccount(data []byte) uint32 {
 	return header.AccountType
 }
 
+type ProductAccountHeader struct {
+	AccountHeader `json:"-"`
+	FirstPrice    solana.PublicKey `json:"first_price"` // first price account in list
+}
+
+// ProductAccountHeaderLen is the binary offset of the AttrsData field within RawProductAccount.
+const ProductAccountHeaderLen = 48
+
 // ProductAccount contains metadata for a single product,
 // such as its symbol and its base/quote currencies.
 type ProductAccount struct {
-	AccountHeader
-	FirstPrice solana.PublicKey // first price account in list
-	AttrsData  [464]byte        // key-value string pairs of additional data
+	ProductAccountHeader
+	Attrs AttrsMap `json:"attrs"` // key-value string pairs of additional data
 }
 
-// ProductAccountAttrsDataOffset is the binary offset of the AttrsData field within ProductAccount.
-const ProductAccountAttrsDataOffset = 48
+type RawProductAccount struct {
+	ProductAccountHeader
+	AttrsData [464]byte
+}
 
-// UnmarshalBinary decodes the product account from the on-chain format.
-func (p *ProductAccount) UnmarshalBinary(buf []byte) error {
-	decoder := bin.NewBinDecoder(buf)
-	if err := decoder.Decode(p); err != nil {
+// UnmarshalJSON decodes the product account contents from JSON.
+func (p *ProductAccount) UnmarshalJSON(buf []byte) error {
+	var inner struct {
+		ProductAccountHeader
+		Attrs AttrsMap `json:"attrs"` // key-value string pairs of additional data
+	}
+	if err := json.Unmarshal(buf, &inner); err != nil {
 		return err
 	}
-	if !p.AccountHeader.Valid() {
-		return errors.New("invalid account")
-	}
-	if p.AccountType != AccountTypeProduct {
-		return errors.New("not a product account")
+	*p = ProductAccount{
+		ProductAccountHeader: ProductAccountHeader{
+			AccountHeader: AccountHeader{
+				Magic:       Magic,
+				Version:     V2,
+				AccountType: AccountTypeProduct,
+				Size:        uint32(ProductAccountHeaderLen + inner.Attrs.BinaryLen()),
+			},
+			FirstPrice: inner.FirstPrice,
+		},
+		Attrs: inner.Attrs,
 	}
 	return nil
 }
 
-// GetAttrsMap returns the parsed set of key-value pairs.
-func (p *ProductAccount) GetAttrsMap() (AttrsMap, error) {
+// UnmarshalBinary decodes the product account from the on-chain format.
+func (p *ProductAccount) UnmarshalBinary(buf []byte) error {
+	// Start by decoding the header and raw attrs data byte array.
+	decoder := bin.NewBinDecoder(buf)
+	var raw RawProductAccount
+	if err := decoder.Decode(&raw); err != nil {
+		return err
+	}
+	if !raw.AccountHeader.Valid() {
+		return errors.New("invalid account")
+	}
+	if raw.AccountType != AccountTypeProduct {
+		return errors.New("not a product account")
+	}
+	p.ProductAccountHeader = raw.ProductAccountHeader
+	// Now decode AttrsData.
 	// Length of attrs is determined by size value in header.
-	data := p.AttrsData[:]
-	maxSize := int(p.Size) - ProductAccountAttrsDataOffset
+	data := raw.AttrsData[:]
+	maxSize := int(p.Size) - ProductAccountHeaderLen
 	if maxSize > 0 && len(data) > maxSize {
 		data = data[:maxSize]
 	}
 	// Unmarshal attrs.
-	var attrs AttrsMap
-	err := attrs.UnmarshalBinary(data)
-	return attrs, err
-}
-
-// UnmarshalJSON loads the product account's content from JSON.
-func (p *ProductAccount) UnmarshalJSON(data []byte) error {
-	// Decode JSON as strings map.
-	var content map[string]string
-	if err := json.Unmarshal(data, &content); err != nil {
-		return err
-	}
-	// Re-encode as binary data.
-	attrsMap, err := NewAttrsMap(content)
-	if err != nil {
-		return err
-	}
-	mapData, err := attrsMap.MarshalBinary()
-	if err != nil {
-		return err // unreachable
-	}
-	if len(mapData) > len(p.AttrsData) {
-		return fmt.Errorf("data does not fit in product account")
-	}
-	// Copy binary data into product account, zero remaining bytes.
-	p.AccountHeader = AccountHeader{
-		Magic:       Magic,
-		Version:     V2,
-		AccountType: AccountTypeProduct,
-		Size:        uint32(ProductAccountAttrsDataOffset + len(mapData)),
-	}
-	copy(p.AttrsData[:], mapData)
-	for i := len(mapData); i < len(p.AttrsData); i++ {
-		p.AttrsData[i] = 0
-	}
-	return nil
-}
-
-// MarshalJSON returns a JSON-representation of the product account contents.
-func (p *ProductAccount) MarshalJSON() ([]byte, error) {
-	// Decode binary data from product account.
-	content, err := p.GetAttrsMap()
-	if err != nil {
-		return nil, err
-	}
-	// Re-encode as JSON.
-	return json.Marshal(content.KVs())
+	return p.Attrs.UnmarshalBinary(data)
 }
 
 // Ema is an exponentially-weighted moving average.

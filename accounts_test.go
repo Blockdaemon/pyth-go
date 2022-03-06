@@ -34,32 +34,25 @@ var (
 )
 
 var productAccount_EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko = ProductAccount{
-	AccountHeader: AccountHeader{
-		Magic:       Magic,
-		Version:     V2,
-		AccountType: AccountTypeProduct,
-		Size:        161,
+	ProductAccountHeader: ProductAccountHeader{
+		AccountHeader: AccountHeader{
+			Magic:       Magic,
+			Version:     V2,
+			AccountType: AccountTypeProduct,
+			Size:        161,
+		},
+		FirstPrice: solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh"),
 	},
-	FirstPrice: solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh"),
-	AttrsData: [464]byte{
-		0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x0a,
-		0x46, 0x58, 0x2e, 0x45, 0x55, 0x52, 0x2f, 0x55,
-		0x53, 0x44, 0x0a, 0x61, 0x73, 0x73, 0x65, 0x74,
-		0x5f, 0x74, 0x79, 0x70, 0x65, 0x02, 0x46, 0x58,
-		0x0e, 0x71, 0x75, 0x6f, 0x74, 0x65, 0x5f, 0x63,
-		0x75, 0x72, 0x72, 0x65, 0x6e, 0x63, 0x79, 0x03,
-		0x55, 0x53, 0x44, 0x0b, 0x64, 0x65, 0x73, 0x63,
-		0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x07,
-		0x45, 0x55, 0x52, 0x2f, 0x55, 0x53, 0x44, 0x0e,
-		0x67, 0x65, 0x6e, 0x65, 0x72, 0x69, 0x63, 0x5f,
-		0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x06, 0x45,
-		0x55, 0x52, 0x55, 0x53, 0x44, 0x04, 0x62, 0x61,
-		0x73, 0x65, 0x03, 0x45, 0x55, 0x52, 0x05, 0x74,
-		0x65, 0x6e, 0x6f, 0x72, 0x04, 0x53, 0x70, 0x6f,
-		0x74, 0x53, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	Attrs: AttrsMap{
+		Pairs: [][2]string{
+			{"symbol", "FX.EUR/USD"},
+			{"asset_type", "FX"},
+			{"quote_currency", "USD"},
+			{"description", "EUR/USD"},
+			{"generic_symbol", "EURUSD"},
+			{"base", "EUR"},
+			{"tenor", "Spot"},
+		},
 	},
 }
 
@@ -78,40 +71,31 @@ func TestProductAccount(t *testing.T) {
 		"tenor":          "Spot",
 	}
 
-	t.Run("GetAttrsMap", func(t *testing.T) {
-		actualList, err := actual.GetAttrsMap()
-		assert.NoError(t, err)
-		actual := actualList.KVs()
-		assert.Equal(t, expectedMap, actual)
-	})
-
 	t.Run("JSON", func(t *testing.T) {
 		jsonData, err := json.Marshal(&actual)
 		require.NoError(t, err)
 
+		//language=JSON
 		expected := `{
-			"asset_type": "FX",
-			"base": "EUR",
-			"description": "EUR/USD",
-			"generic_symbol": "EURUSD",
-			"quote_currency": "USD",
-			"symbol": "FX.EUR/USD",
-			"tenor": "Spot"
+			"first_price": "E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh",
+			"attrs": {
+				"asset_type": "FX",
+				"base": "EUR",
+				"description": "EUR/USD",
+				"generic_symbol": "EURUSD",
+				"quote_currency": "USD",
+				"symbol": "FX.EUR/USD",
+				"tenor": "Spot"
+			}
 		}`
 		assert.JSONEq(t, expected, string(jsonData))
 
 		// Deserialize JSON again.
 		var actual2 ProductAccount
-		// Write junk into target, so we can ensure the entire account is written.
-		for i := range actual2.AttrsData {
-			actual2.AttrsData[i] = 0x41
-		}
 		require.NoError(t, json.Unmarshal(jsonData, &actual2))
 		assert.True(t, actual2.Valid())
 		assert.Equal(t, actual.Size, actual2.Size)
-		actual2Map, err := actual2.GetAttrsMap()
-		require.NoError(t, err)
-		assert.Equal(t, expectedMap, actual2Map.KVs())
+		assert.Equal(t, expectedMap, actual2.Attrs.KVs())
 	})
 }
 

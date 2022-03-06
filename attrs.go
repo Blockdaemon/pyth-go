@@ -16,6 +16,7 @@ package pyth
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sort"
@@ -68,6 +69,14 @@ func (a *AttrsMap) UnmarshalBinary(data []byte) (err error) {
 	return
 }
 
+// BinaryLen returns this AttrsMap's length in binary encoding.
+func (a AttrsMap) BinaryLen() (size int) {
+	for _, entry := range a.Pairs {
+		size += 1 + len(entry[0]) + 1 + len(entry[1])
+	}
+	return
+}
+
 // ReadAttrsMapFromBinary consumes all bytes from a binary reader,
 // returning an AttrsMap and the number of bytes read.
 func ReadAttrsMapFromBinary(rd *bytes.Reader) (out AttrsMap, n int, err error) {
@@ -99,6 +108,21 @@ func (a AttrsMap) MarshalBinary() ([]byte, error) {
 		}
 	}
 	return buf.Bytes(), nil
+}
+
+// UnmarshalJSON loads a JSON string map.
+func (a *AttrsMap) UnmarshalJSON(data []byte) (err error) {
+	var content map[string]string
+	if err := json.Unmarshal(data, &content); err != nil {
+		return err
+	}
+	*a, err = NewAttrsMap(content)
+	return
+}
+
+// MarshalJSON returns a JSON string map.
+func (a *AttrsMap) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.KVs())
 }
 
 // readLPString returns a length-prefixed string as seen in AttrsMap.

@@ -29,20 +29,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	testRPC = "https://api.devnet.solana.com"
+	testWS  = "wss://api.devnet.solana.com"
+)
+
 func ExampleClient_GetAllProducts() {
-	client := NewClient(Devnet, "https://api.devnet.solana.com", "wss://api.devnet.solana.com")
+	client := NewClient(Devnet, testRPC, testWS)
 	products, _ := client.GetAllProducts(context.TODO())
 	// Print first product as JSON.
 	jsonData, _ := json.MarshalIndent(&products[0], "", "  ")
 	fmt.Println(string(jsonData))
 	// Output:
 	// {
-	//   "asset_type": "Crypto",
-	//   "base": "BCH",
-	//   "description": "BCH/USD",
-	//   "generic_symbol": "BCHUSD",
-	//   "quote_currency": "USD",
-	//   "symbol": "Crypto.BCH/USD"
+	//   "first_price": "4EQrNZYk5KR1RnjyzbaaRbHsv8VqZWzSUtvx58wLsZbj",
+	//   "attrs": {
+	//     "asset_type": "Crypto",
+	//     "base": "BCH",
+	//     "description": "BCH/USD",
+	//     "generic_symbol": "BCHUSD",
+	//     "quote_currency": "USD",
+	//     "symbol": "Crypto.BCH/USD"
+	//   },
+	//   "pubkey": "89GseEmvNkzAMMEXcW9oTYzqRPXTsJ3BmNerXmgA1osV"
 	// }
 }
 
