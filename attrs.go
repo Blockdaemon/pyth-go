@@ -1,9 +1,25 @@
+//  Copyright 2022 Blockdaemon Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package pyth
 
 import (
 	"bytes"
 	"fmt"
 	"io"
+	"sort"
+	"strings"
 )
 
 // AttrsMap is a list of string key-value pairs with stable order.
@@ -24,6 +40,7 @@ func NewAttrsMap(fromGo map[string]string) (out AttrsMap, err error) {
 		}
 		out.Pairs = append(out.Pairs, [2]string{k, v})
 	}
+	out.Sort()
 	return
 }
 
@@ -34,6 +51,13 @@ func (a AttrsMap) KVs() map[string]string {
 		m[kv[0]] = kv[1]
 	}
 	return m
+}
+
+// Sort sorts the keys of an AttrsMap by lexicographic order.
+func (a AttrsMap) Sort() {
+	sort.Slice(a.Pairs, func(i, j int) bool {
+		return strings.Compare(a.Pairs[i][0], a.Pairs[j][0]) < 0
+	})
 }
 
 // UnmarshalBinary unmarshals AttrsMap from its on-chain format.
