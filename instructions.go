@@ -23,24 +23,10 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
-// Program IDs of the Pyth oracle program.
-var (
-	ProgramIDDevnet  = solana.MustPublicKeyFromBase58("gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s")
-	ProgramIDTestnet = solana.MustPublicKeyFromBase58("8tfDNiaEyrV6Q1U4DEXrEigs9DoDtkugzFbybENEbCDz")
-	ProgramIDMainnet = solana.MustPublicKeyFromBase58("FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH")
-)
-
-// Root mapping account IDs listing the products in the Pyth oracle program.
-var (
-	MappingKeyDevnet  = solana.MustPublicKeyFromBase58("BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2")
-	MappingKeyTestnet = solana.MustPublicKeyFromBase58("AFmdnt9ng1uVxqCmqwQJDAYC5cKTkw8gJKSM5PnzuF6z")
-	MappingKeyMainnet = solana.MustPublicKeyFromBase58("AHtgzX45WTKfkPG53L6WYhGEXwQkN1BVknET3sVsLL8J")
-)
-
 func init() {
-	solana.RegisterInstructionDecoder(ProgramIDDevnet, newInstructionDecoder(ProgramIDDevnet))
-	solana.RegisterInstructionDecoder(ProgramIDTestnet, newInstructionDecoder(ProgramIDTestnet))
-	solana.RegisterInstructionDecoder(ProgramIDMainnet, newInstructionDecoder(ProgramIDMainnet))
+	solana.RegisterInstructionDecoder(Devnet.Program, newInstructionDecoder(Devnet.Program))
+	solana.RegisterInstructionDecoder(Testnet.Program, newInstructionDecoder(Testnet.Program))
+	solana.RegisterInstructionDecoder(Mainnet.Program, newInstructionDecoder(Mainnet.Program))
 }
 
 // Pyth program instructions.

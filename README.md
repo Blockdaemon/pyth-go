@@ -7,7 +7,6 @@
     <a href="https://pkg.go.dev/go.blockdaemon.com/pyth"><img src="https://pkg.go.dev/badge/go.blockdaemon.com/pyth.svg" alt="Go Reference"></a>
     <a href="https://github.com/Blockdaemon/pyth-go/actions/workflows/test.yml"><img src="https://github.com/Blockdaemon/pyth-go/actions/workflows/test.yml/badge.svg" alt="unit tests"></a>
   </p>
-  <sub>Built with 👿 at <a href="https://blockdaemon.com">Blockdaemon</a></sub>
 </div>
 
 ### Summary
@@ -27,3 +26,8 @@ go get go.blockdaemon.com/pyth@latest
 ```
 
 Find docs and usage examples on [pkg.go.dev](https://pkg.go.dev/go.blockdaemon.com/pyth).
+
+### Attributions
+
+- Built with 👿 at [Blockdaemon](https://blockdaemon.com)
+- Using [immaterial.ink's](https://twitter.com/immaterial_ink) awesome Solana [Go SDK](https://github.com/gagliardetto/solana-go)

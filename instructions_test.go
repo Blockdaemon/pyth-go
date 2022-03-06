@@ -45,16 +45,16 @@ var (
 )
 
 func TestInstruction_InitMapping(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
-		solana.Meta(MappingKeyDevnet).SIGNER().WRITE(),
+		solana.Meta(env.Mapping).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseInitMapping)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseInitMapping)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -68,7 +68,7 @@ func TestInstruction_InitMapping(t *testing.T) {
 	assert.Len(t, data, 8)
 	require.Equal(t, caseInitMapping, data)
 
-	rebuiltIns := NewInstructionBuilder(program).InitMapping(
+	rebuiltIns := NewInstructionBuilder(env.Program).InitMapping(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 	)
@@ -76,17 +76,17 @@ func TestInstruction_InitMapping(t *testing.T) {
 }
 
 func TestInstruction_AddMapping(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
-		solana.Meta(MappingKeyDevnet).SIGNER().WRITE(),
-		solana.Meta(MappingKeyTestnet).SIGNER().WRITE(),
+		solana.Meta(env.Mapping).SIGNER().WRITE(),
+		solana.Meta(Testnet.Mapping).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseAddMapping)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseAddMapping)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -100,7 +100,7 @@ func TestInstruction_AddMapping(t *testing.T) {
 	assert.Len(t, data, 8)
 	require.Equal(t, caseAddMapping, data)
 
-	rebuiltIns := NewInstructionBuilder(program).AddMapping(
+	rebuiltIns := NewInstructionBuilder(env.Program).AddMapping(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		accs[2].PublicKey,
@@ -109,17 +109,17 @@ func TestInstruction_AddMapping(t *testing.T) {
 }
 
 func TestInstruction_AddProduct(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
-		solana.Meta(MappingKeyDevnet).SIGNER().WRITE(),
+		solana.Meta(env.Mapping).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseAddProduct)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseAddProduct)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -133,7 +133,7 @@ func TestInstruction_AddProduct(t *testing.T) {
 	assert.Len(t, data, 8)
 	require.Equal(t, caseAddProduct, data)
 
-	rebuiltIns := NewInstructionBuilder(program).AddProduct(
+	rebuiltIns := NewInstructionBuilder(env.Program).AddProduct(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		accs[2].PublicKey,
@@ -142,16 +142,16 @@ func TestInstruction_AddProduct(t *testing.T) {
 }
 
 func TestInstruction_UpdProduct(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseUpdProduct)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseUpdProduct)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -177,7 +177,7 @@ func TestInstruction_UpdProduct(t *testing.T) {
 	// no length check since product update is arbitrary length
 	require.Equal(t, caseUpdProduct, data)
 
-	rebuiltIns := NewInstructionBuilder(program).UpdProduct(
+	rebuiltIns := NewInstructionBuilder(env.Program).UpdProduct(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		*actualIns.Payload.(*CommandUpdProduct),
@@ -186,17 +186,17 @@ func TestInstruction_UpdProduct(t *testing.T) {
 }
 
 func TestInstruction_AddPrice(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseAddPrice)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseAddPrice)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -213,7 +213,7 @@ func TestInstruction_AddPrice(t *testing.T) {
 	assert.Len(t, data, 16)
 	require.Equal(t, caseAddPrice, data)
 
-	rebuiltIns := NewInstructionBuilder(program).AddPrice(
+	rebuiltIns := NewInstructionBuilder(env.Program).AddPrice(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		accs[2].PublicKey,
@@ -223,16 +223,16 @@ func TestInstruction_AddPrice(t *testing.T) {
 }
 
 func TestInstruction_AddPublisher(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseAddPublisher)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseAddPublisher)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -248,7 +248,7 @@ func TestInstruction_AddPublisher(t *testing.T) {
 	assert.Len(t, data, 40)
 	require.Equal(t, caseAddPublisher, data)
 
-	rebuiltIns := NewInstructionBuilder(program).AddPublisher(
+	rebuiltIns := NewInstructionBuilder(env.Program).AddPublisher(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		*actualIns.Payload.(*CommandAddPublisher),
@@ -257,16 +257,16 @@ func TestInstruction_AddPublisher(t *testing.T) {
 }
 
 func TestInstruction_DelPublisher(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("7cVfgArCheMR6Cs4t6vz5rfnqd56vZq4ndaBrY5xkxXy")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseDelPublisher)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseDelPublisher)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -282,7 +282,7 @@ func TestInstruction_DelPublisher(t *testing.T) {
 	assert.Len(t, data, 40)
 	require.Equal(t, caseDelPublisher, data)
 
-	rebuiltIns := NewInstructionBuilder(program).DelPublisher(
+	rebuiltIns := NewInstructionBuilder(env.Program).DelPublisher(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		*actualIns.Payload.(*CommandDelPublisher),
@@ -291,17 +291,17 @@ func TestInstruction_DelPublisher(t *testing.T) {
 }
 
 func TestInstruction_UpdPrice(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("5U3bH5b6XtG99aVWLqwVzYPVpQiFHytBD68Rz2eFPZd7")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw")).WRITE(),
 		solana.Meta(solana.SysVarClockPubkey),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseUpdPrice)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseUpdPrice)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -321,7 +321,7 @@ func TestInstruction_UpdPrice(t *testing.T) {
 	assert.Len(t, data, 40)
 	require.Equal(t, caseUpdPrice, data)
 
-	rebuiltIns := NewInstructionBuilder(program).UpdPrice(
+	rebuiltIns := NewInstructionBuilder(env.Program).UpdPrice(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		*actualIns.Payload.(*CommandUpdPrice),
@@ -330,16 +330,16 @@ func TestInstruction_UpdPrice(t *testing.T) {
 }
 
 func TestInstruction_SetMinPub(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("5U3bH5b6XtG99aVWLqwVzYPVpQiFHytBD68Rz2eFPZd7")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, caseSetMinPub)
+	actualIns, err := DecodeInstruction(env.Program, accs, caseSetMinPub)
 	require.NoError(t, err)
 
-	assert.Equal(t, program, actualIns.ProgramID())
+	assert.Equal(t, env.Program, actualIns.ProgramID())
 	assert.Equal(t, accs, actualIns.Accounts())
 	assert.Equal(t, CommandHeader{
 		Version: V2,
@@ -356,7 +356,7 @@ func TestInstruction_SetMinPub(t *testing.T) {
 	assert.Len(t, data, 12)
 	require.Equal(t, caseSetMinPub, data)
 
-	rebuiltIns := NewInstructionBuilder(program).SetMinPub(
+	rebuiltIns := NewInstructionBuilder(env.Program).SetMinPub(
 		accs[0].PublicKey,
 		accs[1].PublicKey,
 		*actualIns.Payload.(*CommandSetMinPub),
@@ -365,13 +365,13 @@ func TestInstruction_SetMinPub(t *testing.T) {
 }
 
 func TestInstruction_WrongVersion(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("5U3bH5b6XtG99aVWLqwVzYPVpQiFHytBD68Rz2eFPZd7")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, []byte{
+	actualIns, err := DecodeInstruction(env.Program, accs, []byte{
 		0x03, 0x00, 0x00, 0x00, // version
 		0x00, 0x00, 0x00, 0x00, // instruction type
 	})
@@ -380,13 +380,13 @@ func TestInstruction_WrongVersion(t *testing.T) {
 }
 
 func TestInstruction_Unsupported(t *testing.T) {
-	var program = ProgramIDDevnet
+	var env = Devnet
 	var accs = []*solana.AccountMeta{
 		solana.Meta(solana.MustPublicKeyFromBase58("5U3bH5b6XtG99aVWLqwVzYPVpQiFHytBD68Rz2eFPZd7")).SIGNER().WRITE(),
 		solana.Meta(solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")).SIGNER().WRITE(),
 	}
 
-	actualIns, err := DecodeInstruction(program, accs, []byte{
+	actualIns, err := DecodeInstruction(env.Program, accs, []byte{
 		0x02, 0x00, 0x00, 0x00, // version
 		0xfe, 0xff, 0x00, 0x00, // instruction type
 	})
