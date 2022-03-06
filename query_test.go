@@ -17,6 +17,8 @@ package pyth
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -26,6 +28,23 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func ExampleClient_GetAllProducts() {
+	client := NewClient(Devnet, "https://api.devnet.solana.com", "wss://api.devnet.solana.com")
+	products, _ := client.GetAllProducts(context.TODO())
+	// Print first product as JSON.
+	jsonData, _ := json.MarshalIndent(&products[0], "", "  ")
+	fmt.Println(string(jsonData))
+	// Output:
+	// {
+	//   "asset_type": "Crypto",
+	//   "base": "BCH",
+	//   "description": "BCH/USD",
+	//   "generic_symbol": "BCHUSD",
+	//   "quote_currency": "USD",
+	//   "symbol": "Crypto.BCH/USD"
+	// }
+}
 
 func TestClient_GetProductAccount(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(wr http.ResponseWriter, req *http.Request) {
