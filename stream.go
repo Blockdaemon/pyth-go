@@ -17,6 +17,7 @@ package pyth
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -26,16 +27,63 @@ import (
 	"go.uber.org/zap"
 )
 
+// StreamPriceAccounts creates a new stream of price account updates.
+func (c *Client) StreamPriceAccounts() *PriceAccountStream {
+	ctx, cancel := context.WithCancel(context.Background())
+	stream := &PriceAccountStream{
+		cancel:  cancel,
+		updates: make(chan PriceAccountUpdate),
+		client:  c,
+	}
+	stream.errLock.Lock()
+	go stream.runWrapper(ctx)
+	return stream
+}
+
+// PriceAccountUpdate is a real-time update carrying a price account change.
 type PriceAccountUpdate struct {
 	Slot uint64
 	*PriceAccount
 }
 
-// StreamPriceAccounts sends an update to Prometheus any time a Pyth oracle account changes.
-func (c *Client) StreamPriceAccounts(ctx context.Context, updates chan<- PriceAccountUpdate) error {
+// PriceAccountStream is an ongoing stream of on-chain price account updates.
+type PriceAccountStream struct {
+	cancel  context.CancelFunc
+	updates chan PriceAccountUpdate
+	client  *Client
+	err     error
+	errLock sync.Mutex
+}
+
+// Updates returns a channel with new price account updates.
+func (p *PriceAccountStream) Updates() <-chan PriceAccountUpdate {
+	return p.updates
+}
+
+// Err returns the reason why the price account stream is closed.
+// Will block until the stream has actually closed.
+// Returns nil if closure was expected.
+func (p *PriceAccountStream) Err() error {
+	p.errLock.Lock()
+	defer p.errLock.Unlock()
+	return p.err
+}
+
+// Close must be called when no more updates are needed.
+func (p *PriceAccountStream) Close() {
+	p.cancel()
+}
+
+func (p *PriceAccountStream) runWrapper(ctx context.Context) {
+	defer p.errLock.Unlock()
+	p.err = p.run(ctx)
+}
+
+func (p *PriceAccountStream) run(ctx context.Context) error {
+	defer close(p.updates)
 	const retryInterval = 3 * time.Second
 	return backoff.Retry(func() error {
-		err := c.streamPriceAccounts(ctx, updates)
+		err := p.runConn(ctx)
 		switch {
 		case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 			return backoff.Permanent(err)
@@ -45,8 +93,8 @@ func (c *Client) StreamPriceAccounts(ctx context.Context, updates chan<- PriceAc
 	}, backoff.WithContext(backoff.NewConstantBackOff(retryInterval), ctx))
 }
 
-func (c *Client) streamPriceAccounts(ctx context.Context, updates chan<- PriceAccountUpdate) error {
-	client, err := ws.Connect(ctx, c.WebSocketURL)
+func (p *PriceAccountStream) runConn(ctx context.Context) error {
+	client, err := ws.Connect(ctx, p.client.WebSocketURL)
 	if err != nil {
 		return err
 	}
@@ -62,7 +110,7 @@ func (c *Client) streamPriceAccounts(ctx context.Context, updates chan<- PriceAc
 	defer metricsWsActiveConns.Dec()
 
 	sub, err := client.ProgramSubscribeWithOpts(
-		c.Env.Program,
+		p.client.Env.Program,
 		rpc.CommitmentConfirmed,
 		solana.EncodingBase64Zstd,
 		[]rpc.RPCFilter{
@@ -83,17 +131,13 @@ func (c *Client) streamPriceAccounts(ctx context.Context, updates chan<- PriceAc
 
 	// Stream updates.
 	for {
-		if err := c.readNextUpdate(ctx, sub, updates); err != nil {
+		if err := p.readNextUpdate(ctx, sub); err != nil {
 			return err
 		}
 	}
 }
 
-func (c *Client) readNextUpdate(
-	ctx context.Context,
-	sub *ws.ProgramSubscription,
-	updates chan<- PriceAccountUpdate,
-) error {
+func (p *PriceAccountStream) readNextUpdate(ctx context.Context, sub *ws.ProgramSubscription) error {
 	// If no update comes in within 20 seconds, bail.
 	const readTimeout = 20 * time.Second
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
@@ -102,7 +146,7 @@ func (c *Client) readNextUpdate(
 		<-ctx.Done()
 		// Terminate subscription if above timer has expired.
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			c.Log.Warn("Read deadline exceeded, terminating WebSocket connection",
+			p.client.Log.Warn("Read deadline exceeded, terminating WebSocket connection",
 				zap.Duration("timeout", readTimeout))
 			sub.Unsubscribe()
 		}
@@ -116,7 +160,7 @@ func (c *Client) readNextUpdate(
 	metricsWsEventsTotal.Inc()
 
 	// Decode update.
-	if update.Value.Account.Owner != c.Env.Program {
+	if update.Value.Account.Owner != p.client.Env.Program {
 		return nil
 	}
 	accountData := update.Value.Account.Data.GetBinary()
@@ -125,7 +169,7 @@ func (c *Client) readNextUpdate(
 	}
 	priceAcc := new(PriceAccount)
 	if err := priceAcc.UnmarshalBinary(accountData); err != nil {
-		c.Log.Warn("Failed to unmarshal priceAcc account", zap.Error(err))
+		p.client.Log.Warn("Failed to unmarshal priceAcc account", zap.Error(err))
 		return nil
 	}
 
@@ -137,7 +181,7 @@ func (c *Client) readNextUpdate(
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case updates <- msg:
+	case p.updates <- msg:
 		return nil
 	}
 }
