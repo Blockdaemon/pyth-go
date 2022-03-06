@@ -16,6 +16,7 @@ package pyth
 
 import (
 	_ "embed"
+	"encoding/json"
 	"testing"
 
 	"github.com/gagliardetto/solana-go"
@@ -67,20 +68,50 @@ func TestProductAccount(t *testing.T) {
 	require.NoError(t, actual.UnmarshalBinary(caseProductAccount))
 	assert.Equal(t, &productAccount_EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko, &actual)
 
+	expectedMap := map[string]string{
+		"asset_type":     "FX",
+		"base":           "EUR",
+		"description":    "EUR/USD",
+		"generic_symbol": "EURUSD",
+		"quote_currency": "USD",
+		"symbol":         "FX.EUR/USD",
+		"tenor":          "Spot",
+	}
+
 	t.Run("GetAttrsMap", func(t *testing.T) {
-		expected := map[string]string{
-			"asset_type":     "FX",
-			"base":           "EUR",
-			"description":    "EUR/USD",
-			"generic_symbol": "EURUSD",
-			"quote_currency": "USD",
-			"symbol":         "FX.EUR/USD",
-			"tenor":          "Spot",
-		}
 		actualList, err := actual.GetAttrsMap()
 		assert.NoError(t, err)
 		actual := actualList.KVs()
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, expectedMap, actual)
+	})
+
+	t.Run("JSON", func(t *testing.T) {
+		jsonData, err := json.Marshal(&actual)
+		require.NoError(t, err)
+
+		expected := `{
+			"asset_type": "FX",
+			"base": "EUR",
+			"description": "EUR/USD",
+			"generic_symbol": "EURUSD",
+			"quote_currency": "USD",
+			"symbol": "FX.EUR/USD",
+			"tenor": "Spot"
+		}`
+		assert.JSONEq(t, expected, string(jsonData))
+
+		// Deserialize JSON again.
+		var actual2 ProductAccount
+		// Write junk into target, so we can ensure the entire account is written.
+		for i := range actual2.AttrsData {
+			actual2.AttrsData[i] = 0x41
+		}
+		require.NoError(t, json.Unmarshal(jsonData, &actual2))
+		assert.True(t, actual2.Valid())
+		assert.Equal(t, actual.Size, actual2.Size)
+		actual2Map, err := actual2.GetAttrsMap()
+		require.NoError(t, err)
+		assert.Equal(t, expectedMap, actual2Map.KVs())
 	})
 }
 

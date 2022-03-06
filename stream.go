@@ -1,3 +1,17 @@
+//  Copyright 2022 Blockdaemon Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package pyth
 
 import (
@@ -11,21 +25,6 @@ import (
 	"github.com/gagliardetto/solana-go/rpc/ws"
 	"go.uber.org/zap"
 )
-
-// GetPriceAccount retrieves a price account from the blockchain.
-func (c *Client) GetPriceAccount(ctx context.Context, priceKey solana.PublicKey) (*PriceAccount, error) {
-	accountInfo, err := c.RPC.GetAccountInfo(ctx, priceKey)
-	if err != nil {
-		return nil, err
-	}
-	accountData := accountInfo.Value.Data.GetBinary()
-
-	price := new(PriceAccount)
-	if err := price.UnmarshalBinary(accountData); err != nil {
-		return nil, err
-	}
-	return price, nil
-}
 
 type PriceAccountUpdate struct {
 	Slot uint64
@@ -63,7 +62,7 @@ func (c *Client) streamPriceAccounts(ctx context.Context, updates chan<- PriceAc
 	defer metricsWsActiveConns.Dec()
 
 	sub, err := client.ProgramSubscribeWithOpts(
-		c.ProgramKey,
+		c.Env.Program,
 		rpc.CommitmentConfirmed,
 		solana.EncodingBase64Zstd,
 		[]rpc.RPCFilter{
@@ -117,7 +116,7 @@ func (c *Client) readNextUpdate(
 	metricsWsEventsTotal.Inc()
 
 	// Decode update.
-	if update.Value.Account.Owner != c.ProgramKey {
+	if update.Value.Account.Owner != c.Env.Program {
 		return nil
 	}
 	accountData := update.Value.Account.Data.GetBinary()

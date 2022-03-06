@@ -15,7 +15,9 @@
 package pyth
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
@@ -67,6 +69,9 @@ type ProductAccount struct {
 	AttrsData  [464]byte        // key-value string pairs of additional data
 }
 
+// ProductAccountAttrsDataOffset is the binary offset of the AttrsData field within ProductAccount.
+const ProductAccountAttrsDataOffset = 48
+
 // UnmarshalBinary decodes the product account from the on-chain format.
 func (p *ProductAccount) UnmarshalBinary(buf []byte) error {
 	decoder := bin.NewBinDecoder(buf)
@@ -86,7 +91,7 @@ func (p *ProductAccount) UnmarshalBinary(buf []byte) error {
 func (p *ProductAccount) GetAttrsMap() (AttrsMap, error) {
 	// Length of attrs is determined by size value in header.
 	data := p.AttrsData[:]
-	maxSize := int(p.Size) - 48
+	maxSize := int(p.Size) - ProductAccountAttrsDataOffset
 	if maxSize > 0 && len(data) > maxSize {
 		data = data[:maxSize]
 	}
@@ -94,6 +99,50 @@ func (p *ProductAccount) GetAttrsMap() (AttrsMap, error) {
 	var attrs AttrsMap
 	err := attrs.UnmarshalBinary(data)
 	return attrs, err
+}
+
+// UnmarshalJSON loads the product account's content from JSON.
+func (p *ProductAccount) UnmarshalJSON(data []byte) error {
+	// Decode JSON as strings map.
+	var content map[string]string
+	if err := json.Unmarshal(data, &content); err != nil {
+		return err
+	}
+	// Re-encode as binary data.
+	attrsMap, err := NewAttrsMap(content)
+	if err != nil {
+		return err
+	}
+	mapData, err := attrsMap.MarshalBinary()
+	if err != nil {
+		return err // unreachable
+	}
+	if len(mapData) > len(p.AttrsData) {
+		return fmt.Errorf("data does not fit in product account")
+	}
+	// Copy binary data into product account, zero remaining bytes.
+	p.AccountHeader = AccountHeader{
+		Magic:       Magic,
+		Version:     V2,
+		AccountType: AccountTypeProduct,
+		Size:        uint32(ProductAccountAttrsDataOffset + len(mapData)),
+	}
+	copy(p.AttrsData[:], mapData)
+	for i := len(mapData); i < len(p.AttrsData); i++ {
+		p.AttrsData[i] = 0
+	}
+	return nil
+}
+
+// MarshalJSON returns a JSON-representation of the product account contents.
+func (p *ProductAccount) MarshalJSON() ([]byte, error) {
+	// Decode binary data from product account.
+	content, err := p.GetAttrsMap()
+	if err != nil {
+		return nil, err
+	}
+	// Re-encode as JSON.
+	return json.Marshal(content.KVs())
 }
 
 // Ema is an exponentially-weighted moving average.
@@ -179,9 +228,9 @@ func (p *PriceAccount) GetComponent(publisher *solana.PublicKey) *PriceComp {
 // MappingAccount is a piece of a singly linked-list of all products on Pyth.
 type MappingAccount struct {
 	AccountHeader
-	Num      uint32
-	Unused   uint32
-	Next     solana.PublicKey
+	Num      uint32           // number of keys
+	Pad1     uint32           // reserved field
+	Next     solana.PublicKey // pubkey of next mapping account
 	Products [640]solana.PublicKey
 }
 
@@ -198,4 +247,12 @@ func (m *MappingAccount) UnmarshalBinary(buf []byte) error {
 		return errors.New("not a mapping account")
 	}
 	return nil
+}
+
+// ProductKeys returns the slice of product keys referenced by this mapping, excluding empty entries.
+func (m *MappingAccount) ProductKeys() []solana.PublicKey {
+	if m.Num > uint32(len(m.Products)) {
+		return nil
+	}
+	return m.Products[:m.Num]
 }

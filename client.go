@@ -15,7 +15,6 @@
 package pyth
 
 import (
-	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"go.uber.org/zap"
 )
@@ -24,18 +23,22 @@ import (
 //
 // Do not instantiate Client directly, use NewClient instead.
 type Client struct {
-	ProgramKey   solana.PublicKey
+	Env          Env
 	RPC          *rpc.Client
 	WebSocketURL string
 	Log          *zap.Logger
+
+	AccountsBatchSize int // number of accounts to get with getMultipleAccounts()
 }
 
 // NewClient creates a new client to the Pyth on-chain program.
-func NewClient(programKey solana.PublicKey, rpcURL string, wsURL string) *Client {
+func NewClient(env Env, rpcURL string, wsURL string) *Client {
 	return &Client{
-		ProgramKey:   programKey,
+		Env:          env,
 		RPC:          rpc.New(rpcURL),
 		WebSocketURL: wsURL,
 		Log:          zap.NewNop(),
+
+		AccountsBatchSize: 32,
 	}
 }
