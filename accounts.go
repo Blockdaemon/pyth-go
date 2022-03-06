@@ -20,6 +20,7 @@ import (
 
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
+	"github.com/shopspring/decimal"
 )
 
 // Magic is the 32-bit number prefixed on each account.
@@ -137,7 +138,7 @@ type Ema struct {
 	Denom int64
 }
 
-// PriceInfo contains a price adn confidence at a specific slot.
+// PriceInfo contains a price and confidence at a specific slot.
 //
 // This struct can represent either a publisher's contribution or the outcome of price aggregation.
 type PriceInfo struct {
@@ -146,6 +147,25 @@ type PriceInfo struct {
 	Status  uint32 // status of price
 	CorpAct uint32
 	PubSlot uint64 // valid publishing slot
+}
+
+func (p *PriceInfo) IsZero() bool {
+	return p == nil || *p == PriceInfo{}
+}
+
+// Value returns the parsed price and conf values.
+//
+// If ok is false, the value is invalid.
+func (p *PriceInfo) Value(exponent int32) (price decimal.Decimal, conf decimal.Decimal, ok bool) {
+	price = decimal.New(p.Price, exponent)
+	conf = decimal.New(int64(p.Conf), exponent)
+	ok = p.Status == PriceStatusTrading
+	return
+}
+
+// HasChanged returns whether there was a change between this and another price info.
+func (p *PriceInfo) HasChanged(other *PriceInfo) bool {
+	return (p == nil) != (other == nil) || p.Status != other.Status || p.PubSlot != other.PubSlot
 }
 
 // Price status.

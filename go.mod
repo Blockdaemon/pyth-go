@@ -7,6 +7,7 @@ require (
 	github.com/gagliardetto/binary v0.6.1
 	github.com/gagliardetto/solana-go v1.3.1-0.20220222155336-dd0af958252d
 	github.com/prometheus/client_golang v1.12.1
+	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.21.0
 )

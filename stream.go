@@ -28,6 +28,8 @@ import (
 )
 
 // StreamPriceAccounts creates a new stream of price account updates.
+//
+// It will reconnect automatically if the WebSocket connection breaks or stalls.
 func (c *Client) StreamPriceAccounts() *PriceAccountStream {
 	ctx, cancel := context.WithCancel(context.Background())
 	stream := &PriceAccountStream{
@@ -42,8 +44,9 @@ func (c *Client) StreamPriceAccounts() *PriceAccountStream {
 
 // PriceAccountUpdate is a real-time update carrying a price account change.
 type PriceAccountUpdate struct {
-	Slot uint64
-	*PriceAccount
+	Slot   uint64
+	Pubkey solana.PublicKey
+	Price  *PriceAccount
 }
 
 // PriceAccountStream is an ongoing stream of on-chain price account updates.
@@ -175,8 +178,9 @@ func (p *PriceAccountStream) readNextUpdate(ctx context.Context, sub *ws.Program
 
 	// Send update to channel.
 	msg := PriceAccountUpdate{
-		Slot:         update.Context.Slot,
-		PriceAccount: priceAcc,
+		Slot:   update.Context.Slot,
+		Pubkey: update.Value.Pubkey,
+		Price:  priceAcc,
 	}
 	select {
 	case <-ctx.Done():

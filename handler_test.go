@@ -15,20 +15,30 @@
 package pyth
 
 import (
-	"fmt"
+	"log"
 	"time"
+
+	"github.com/gagliardetto/solana-go"
 )
 
-func ExampleClient_StreamPriceAccounts() {
+func ExamplePriceEventHandler() {
+	// Connect to Pyth on Solana devnet.
 	client := NewClient(Devnet, testRPC, testWS)
+
+	// Open new event stream.
 	stream := client.StreamPriceAccounts()
+	handler := NewPriceEventHandler(stream)
+
+	// Subscribe to price account changes.
+	priceKey := solana.MustPublicKeyFromBase58("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix")
+	handler.OnPriceChange(priceKey, func(info PriceUpdate) {
+		price, conf, ok := info.Current()
+		if ok {
+			log.Printf("Price change: $%s ± $%s", price, conf)
+		}
+	})
+
 	// Close stream after a while.
-	go func() {
-		<-time.After(3 * time.Second)
-		stream.Close()
-	}()
-	// Print updates.
-	for update := range stream.Updates() {
-		fmt.Println(update.Price.Agg.Price)
-	}
+	<-time.After(10 * time.Second)
+	stream.Close()
 }
