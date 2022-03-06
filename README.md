@@ -17,7 +17,7 @@ This library allows you to query, stream and publish price data using the [Go](h
 
 **Warning:** *Work in progress* ⚠️ Expect bugs and breaking changes.
 
-### Getting started
+### Getting Started
 
 Add the Pyth client to your project using the Go CLI.
 
@@ -26,6 +26,14 @@ go get go.blockdaemon.com/pyth@latest
 ```
 
 Find docs and usage examples on [pkg.go.dev](https://pkg.go.dev/go.blockdaemon.com/pyth).
+
+### Useful Links
+
+- [Pyth Explorer](https://pyth.network/markets/)
+- [Pyth Docs](https://docs.pyth.network/)
+- [Pyth program & C client](https://github.com/pyth-network/pyth-client)
+- [Pyth Discord](https://discord.gg/Ff2XDydUhu)
+- [Blockdaemon Discord](https://discord.gg/blockdaemon)
 
 ### Attributions
 
