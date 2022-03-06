@@ -34,6 +34,43 @@ var (
 	testWS  = "wss://api.devnet.solana.com"
 )
 
+func ExampleClient_GetProductAccount() {
+	client := NewClient(Devnet, testRPC, testWS)
+	productPubkey := solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko")
+	product, _ := client.GetProductAccount(context.TODO(), productPubkey)
+	// Print first product as JSON.
+	jsonData, _ := json.MarshalIndent(product, "", "  ")
+	fmt.Println(string(jsonData))
+	// Output:
+	// {
+	//   "first_price": "E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh",
+	//   "attrs": {
+	//     "asset_type": "FX",
+	//     "base": "EUR",
+	//     "description": "EUR/USD",
+	//     "generic_symbol": "EURUSD",
+	//     "quote_currency": "USD",
+	//     "symbol": "FX.EUR/USD",
+	//     "tenor": "Spot"
+	//   }
+	// }
+}
+
+func ExampleClient_GetAllProductKeys() {
+	client := NewClient(Devnet, testRPC, testWS)
+	products, _ := client.GetAllProductKeys(context.TODO())
+	// Print first 5 product account pubkeys.
+	for _, key := range products[:5] {
+		fmt.Println(key)
+	}
+	// Output:
+	// 89GseEmvNkzAMMEXcW9oTYzqRPXTsJ3BmNerXmgA1osV
+	// JCnD5WiurZfoeVPEi2AXVgacg73Wd2iRDDjZDbSwdr9D
+	// G89jkM5wFLpmnbvRbeePUumxsJyzoXaRfgBVjyx2CPzQ
+	// GaBJpKtnyUbyKe34XuyegR7W98a9PT5cg985G974NY8R
+	// Fwosgw2ikRvdzgKcQJwMacyczk3nXgoW3AtVtyVvXSAb
+}
+
 func ExampleClient_GetAllProducts() {
 	client := NewClient(Devnet, testRPC, testWS)
 	products, _ := client.GetAllProducts(context.TODO())
