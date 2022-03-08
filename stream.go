@@ -107,7 +107,7 @@ func (p *PriceAccountStream) runConn(ctx context.Context) error {
 
 	sub, err := client.ProgramSubscribeWithOpts(
 		p.client.Env.Program,
-		rpc.CommitmentConfirmed,
+		rpc.CommitmentProcessed,
 		solana.EncodingBase64Zstd,
 		[]rpc.RPCFilter{
 			{
@@ -156,7 +156,7 @@ func (p *PriceAccountStream) readNextUpdate(ctx context.Context, sub *ws.Program
 	metricsWsEventsTotal.Inc()
 
 	// Decode update.
-	if update.Value.Account.Owner != p.client.Env.Program {
+	if update.Value.Account == nil || update.Value.Account.Owner != p.client.Env.Program {
 		return nil
 	}
 	accountData := update.Value.Account.Data.GetBinary()
