@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,7 +38,8 @@ var (
 func ExampleClient_GetProductAccount() {
 	client := NewClient(Devnet, testRPC, testWS)
 	productPubkey := solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko")
-	product, _ := client.GetProductAccount(context.TODO(), productPubkey)
+	product, _ := client.GetProductAccount(context.TODO(), productPubkey, rpc.CommitmentProcessed)
+	product.Slot = 1234
 	// Print first product as JSON.
 	jsonData, _ := json.MarshalIndent(product, "", "  ")
 	fmt.Println(string(jsonData))
@@ -52,13 +54,15 @@ func ExampleClient_GetProductAccount() {
 	//     "quote_currency": "USD",
 	//     "symbol": "FX.EUR/USD",
 	//     "tenor": "Spot"
-	//   }
+	//   },
+	//   "pubkey": "EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko",
+	//   "slot": 1234
 	// }
 }
 
 func ExampleClient_GetAllProductKeys() {
 	client := NewClient(Devnet, testRPC, testWS)
-	products, _ := client.GetAllProductKeys(context.TODO())
+	products, _ := client.GetAllProductKeys(context.TODO(), rpc.CommitmentProcessed)
 	// Print first 5 product account pubkeys.
 	for _, key := range products[:5] {
 		fmt.Println(key)
@@ -71,10 +75,11 @@ func ExampleClient_GetAllProductKeys() {
 	// Fwosgw2ikRvdzgKcQJwMacyczk3nXgoW3AtVtyVvXSAb
 }
 
-func ExampleClient_GetAllProducts() {
+func ExampleClient_GetAllProductAccounts() {
 	client := NewClient(Devnet, testRPC, testWS)
-	products, _ := client.GetAllProducts(context.TODO())
+	products, _ := client.GetAllProductAccounts(context.TODO(), rpc.CommitmentProcessed)
 	// Print first product as JSON.
+	products[0].Slot = 1234
 	jsonData, _ := json.MarshalIndent(&products[0], "", "  ")
 	fmt.Println(string(jsonData))
 	// Output:
@@ -88,7 +93,8 @@ func ExampleClient_GetAllProducts() {
 	//     "quote_currency": "USD",
 	//     "symbol": "Crypto.BCH/USD"
 	//   },
-	//   "pubkey": "89GseEmvNkzAMMEXcW9oTYzqRPXTsJ3BmNerXmgA1osV"
+	//   "pubkey": "89GseEmvNkzAMMEXcW9oTYzqRPXTsJ3BmNerXmgA1osV",
+	//   "slot": 1234
 	// }
 }
 
@@ -102,7 +108,10 @@ func TestClient_GetProductAccount(t *testing.T) {
 			"method": "getAccountInfo",
 			"params": [
 				"EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko",
-				{"encoding": "base64"}
+				{
+					"commitment": "processed",
+					"encoding": "base64"
+				}
 			]
 		}`, string(buf))
 
@@ -129,12 +138,17 @@ func TestClient_GetProductAccount(t *testing.T) {
 	}))
 	defer server.Close()
 
+	key := solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko")
 	c := NewClient(Devnet, server.URL, server.URL)
-	acc, err := c.GetProductAccount(context.Background(), solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko"))
+	acc, err := c.GetProductAccount(context.Background(), key, rpc.CommitmentProcessed)
 	require.NoError(t, err)
 	require.NotNil(t, acc)
 
-	assert.Equal(t, &productAccount_EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko, acc)
+	assert.Equal(t, ProductAccountEntry{
+		ProductAccount: &productAccount_EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko,
+		Pubkey:         key,
+		Slot:           118773287,
+	}, acc)
 }
 
 func TestClient_GetProductAccount_NotFound(t *testing.T) {
@@ -147,7 +161,10 @@ func TestClient_GetProductAccount_NotFound(t *testing.T) {
 			"method": "getAccountInfo",
 			"params": [
 				"EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko",
-				{"encoding": "base64"}
+				{
+					"commitment": "processed",
+					"encoding": "base64"
+				}
 			]
 		}`, string(buf))
 
@@ -166,9 +183,12 @@ func TestClient_GetProductAccount_NotFound(t *testing.T) {
 	defer server.Close()
 
 	c := NewClient(Devnet, server.URL, server.URL)
-	acc, err := c.GetProductAccount(context.Background(), solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko"))
+	_, err := c.GetProductAccount(
+		context.Background(),
+		solana.MustPublicKeyFromBase58("EWxGfxoPQSNA2744AYdAKmsQZ8F9o9M7oKkvL3VM1dko"),
+		rpc.CommitmentProcessed,
+	)
 	assert.EqualError(t, err, "not found")
-	assert.Nil(t, acc)
 }
 
 func TestClient_GetPriceAccount(t *testing.T) {
@@ -181,7 +201,10 @@ func TestClient_GetPriceAccount(t *testing.T) {
 			"method": "getAccountInfo",
 			"params": [
 				"E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh",
-				{"encoding": "base64"}
+				{
+					"commitment": "processed",
+					"encoding": "base64"
+				}
 			]
 		}`, string(buf))
 
@@ -209,11 +232,16 @@ func TestClient_GetPriceAccount(t *testing.T) {
 	defer server.Close()
 
 	c := NewClient(Devnet, server.URL, server.URL)
-	acc, err := c.GetPriceAccount(context.Background(), solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh"))
+	key := solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh")
+	acc, err := c.GetPriceAccount(context.Background(), key, rpc.CommitmentProcessed)
 	require.NoError(t, err)
 	require.NotNil(t, acc)
 
-	assert.Equal(t, &priceAccount_E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh, acc)
+	assert.Equal(t, PriceAccountEntry{
+		PriceAccount: &priceAccount_E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh,
+		Pubkey:       key,
+		Slot:         118773287,
+	}, acc)
 }
 
 func TestClient_GetPriceAccount_NotFound(t *testing.T) {
@@ -226,7 +254,10 @@ func TestClient_GetPriceAccount_NotFound(t *testing.T) {
 			"method": "getAccountInfo",
 			"params": [
 				"E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh",
-				{"encoding": "base64"}
+				{
+					"commitment": "processed",
+					"encoding": "base64"
+				}
 			]
 		}`, string(buf))
 
@@ -245,9 +276,12 @@ func TestClient_GetPriceAccount_NotFound(t *testing.T) {
 	defer server.Close()
 
 	c := NewClient(Devnet, server.URL, server.URL)
-	acc, err := c.GetPriceAccount(context.Background(), solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh"))
+	_, err := c.GetPriceAccount(
+		context.Background(),
+		solana.MustPublicKeyFromBase58("E36MyBbavhYKHVLWR79GiReNNnBDiHj6nWA7htbkNZbh"),
+		rpc.CommitmentProcessed,
+	)
 	assert.EqualError(t, err, "not found")
-	assert.Nil(t, acc)
 }
 
 func TestClient_GetMappingAccount_NotFound(t *testing.T) {
@@ -260,7 +294,10 @@ func TestClient_GetMappingAccount_NotFound(t *testing.T) {
 			"method": "getAccountInfo",
 			"params": [
 				"BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2",
-				{"encoding": "base64"}
+				{
+					"commitment": "processed",
+					"encoding": "base64"
+				}
 			]
 		}`, string(buf))
 
@@ -279,7 +316,10 @@ func TestClient_GetMappingAccount_NotFound(t *testing.T) {
 	defer server.Close()
 
 	c := NewClient(Devnet, server.URL, server.URL)
-	acc, err := c.GetMappingAccount(context.Background(), solana.MustPublicKeyFromBase58("BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2"))
+	_, err := c.GetMappingAccount(
+		context.Background(),
+		solana.MustPublicKeyFromBase58("BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2"),
+		rpc.CommitmentProcessed,
+	)
 	assert.EqualError(t, err, "not found")
-	assert.Nil(t, acc)
 }

@@ -261,3 +261,24 @@ func (m *MappingAccount) ProductKeys() []solana.PublicKey {
 	}
 	return m.Products[:m.Num]
 }
+
+// ProductAccountEntry is a versioned product account and its pubkey.
+type ProductAccountEntry struct {
+	*ProductAccount
+	Pubkey solana.PublicKey `json:"pubkey"`
+	Slot   uint64           `json:"slot"`
+}
+
+// PriceAccountEntry is a versioned price account and its pubkey.
+type PriceAccountEntry struct {
+	*PriceAccount
+	Pubkey solana.PublicKey `json:"pubkey"`
+	Slot   uint64           `json:"slot"`
+}
+
+// MappingAccountEntry is a versioned mapping account and its pubkey.
+type MappingAccountEntry struct {
+	*MappingAccount
+	Pubkey solana.PublicKey `json:"pubkey"`
+	Slot   uint64           `json:"slot"`
+}

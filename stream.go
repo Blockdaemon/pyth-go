@@ -34,7 +34,7 @@ func (c *Client) StreamPriceAccounts() *PriceAccountStream {
 	ctx, cancel := context.WithCancel(context.Background())
 	stream := &PriceAccountStream{
 		cancel:  cancel,
-		updates: make(chan PriceAccountUpdate),
+		updates: make(chan PriceAccountEntry),
 		client:  c,
 	}
 	stream.errLock.Lock()
@@ -42,24 +42,17 @@ func (c *Client) StreamPriceAccounts() *PriceAccountStream {
 	return stream
 }
 
-// PriceAccountUpdate is a real-time update carrying a price account change.
-type PriceAccountUpdate struct {
-	Slot   uint64
-	Pubkey solana.PublicKey
-	Price  *PriceAccount
-}
-
 // PriceAccountStream is an ongoing stream of on-chain price account updates.
 type PriceAccountStream struct {
 	cancel  context.CancelFunc
-	updates chan PriceAccountUpdate
+	updates chan PriceAccountEntry
 	client  *Client
 	err     error
 	errLock sync.Mutex
 }
 
 // Updates returns a channel with new price account updates.
-func (p *PriceAccountStream) Updates() <-chan PriceAccountUpdate {
+func (p *PriceAccountStream) Updates() <-chan PriceAccountEntry {
 	return p.updates
 }
 
@@ -177,10 +170,10 @@ func (p *PriceAccountStream) readNextUpdate(ctx context.Context, sub *ws.Program
 	}
 
 	// Send update to channel.
-	msg := PriceAccountUpdate{
-		Slot:   update.Context.Slot,
-		Pubkey: update.Value.Pubkey,
-		Price:  priceAcc,
+	msg := PriceAccountEntry{
+		Slot:         update.Context.Slot,
+		Pubkey:       update.Value.Pubkey,
+		PriceAccount: priceAcc,
 	}
 	select {
 	case <-ctx.Done():

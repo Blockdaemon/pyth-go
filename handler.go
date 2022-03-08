@@ -90,9 +90,9 @@ func (p *PriceEventHandler) getComponentCallbacks(priceKey solana.PublicKey, pub
 	return res
 }
 
-func (p *PriceEventHandler) consume(updates <-chan PriceAccountUpdate) {
+func (p *PriceEventHandler) consume(updates <-chan PriceAccountEntry) {
 	for update := range updates {
-		p.processUpdate(update.Pubkey, update.Price)
+		p.processUpdate(update.Pubkey, update.PriceAccount)
 	}
 }
 

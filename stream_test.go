@@ -29,6 +29,6 @@ func ExampleClient_StreamPriceAccounts() {
 	}()
 	// Print updates.
 	for update := range stream.Updates() {
-		fmt.Println(update.Price.Agg.Price)
+		fmt.Println(update.Agg.Price)
 	}
 }
