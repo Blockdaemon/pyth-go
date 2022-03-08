@@ -125,7 +125,7 @@ func (c *Client) GetAllProductAccounts(ctx context.Context, commitment rpc.Commi
 func (c *Client) getProductAccountsPage(
 	ctx context.Context,
 	accs *[]ProductAccountEntry, // accounts out
-	keys []solana.PublicKey,     // keys in
+	keys []solana.PublicKey, // keys in
 	commitment rpc.CommitmentType,
 ) error {
 	res, err := c.RPC.GetMultipleAccountsWithOpts(ctx, keys, &rpc.GetMultipleAccountsOpts{Commitment: commitment})
@@ -204,9 +204,9 @@ func (c *Client) GetPriceAccountsRecursive(ctx context.Context, commitment rpc.C
 
 func (c *Client) getPriceAccountsPage(
 	ctx context.Context,
-	accs *[]PriceAccountEntry,                 // accounts out
-	nextKeys []solana.PublicKey,               // keys in
-	allKeys *[]solana.PublicKey,               // keys out
+	accs *[]PriceAccountEntry, // accounts out
+	nextKeys []solana.PublicKey, // keys in
+	allKeys *[]solana.PublicKey, // keys out
 	visitedKeys map[solana.PublicKey]struct{}, // keys seen
 	commitment rpc.CommitmentType,
 ) error {
