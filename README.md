@@ -15,8 +15,6 @@
 
 This library allows you to query, stream and publish price data using the [Go](https://go.dev/) programming language.
 
-**Warning:** *Work in progress* ⚠️ Expect bugs and breaking changes.
-
 ### Getting Started
 
 Add the Pyth client to your project using the Go CLI.
