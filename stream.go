@@ -84,6 +84,7 @@ func (p *PriceAccountStream) run(ctx context.Context) error {
 		case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 			return backoff.Permanent(err)
 		default:
+			p.client.Log.Error("Stream failed, restarting", zap.Error(err))
 			return err
 		}
 	}, backoff.WithContext(backoff.NewConstantBackOff(retryInterval), ctx))
