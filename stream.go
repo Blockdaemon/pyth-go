@@ -17,6 +17,7 @@ package pyth
 import (
 	"context"
 	"errors"
+	"net"
 	"sync"
 	"time"
 
@@ -153,11 +154,13 @@ func (p *PriceAccountStream) readNextUpdate(ctx context.Context, sub *ws.Program
 	update, err := sub.Recv()
 	if err != nil {
 		return err
+	} else if update == nil {
+		return net.ErrClosed
 	}
 	metricsWsEventsTotal.Inc()
 
 	// Decode update.
-	if update == nil || update.Value.Account == nil || update.Value.Account.Owner != p.client.Env.Program {
+	if update.Value.Account == nil || update.Value.Account.Owner != p.client.Env.Program {
 		return nil
 	}
 	accountData := update.Value.Account.Data.GetBinary()
