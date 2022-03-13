@@ -46,7 +46,7 @@ func (i *InstructionBuilder) AddMapping(
 	fundingKey solana.PublicKey,
 	tailMappingKey solana.PublicKey,
 	newMappingKey solana.PublicKey,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_AddMapping),
@@ -63,7 +63,7 @@ func (i *InstructionBuilder) AddProduct(
 	fundingKey solana.PublicKey,
 	mappingKey solana.PublicKey,
 	productKey solana.PublicKey,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_AddProduct),
@@ -80,7 +80,7 @@ func (i *InstructionBuilder) UpdProduct(
 	fundingKey solana.PublicKey,
 	productKey solana.PublicKey,
 	payload CommandUpdProduct,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_UpdProduct),
@@ -98,7 +98,7 @@ func (i *InstructionBuilder) AddPrice(
 	productKey solana.PublicKey,
 	priceKey solana.PublicKey,
 	payload CommandAddPrice,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_AddPrice),
@@ -116,7 +116,7 @@ func (i *InstructionBuilder) AddPublisher(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
 	payload CommandAddPublisher,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_AddPublisher),
@@ -133,7 +133,7 @@ func (i *InstructionBuilder) DelPublisher(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
 	payload CommandDelPublisher,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_DelPublisher),
@@ -150,7 +150,7 @@ func (i *InstructionBuilder) UpdPrice(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
 	payload CommandUpdPrice,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_UpdPrice),
@@ -167,7 +167,7 @@ func (i *InstructionBuilder) UpdPrice(
 func (i *InstructionBuilder) AggPrice(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_AggPrice),
@@ -184,7 +184,7 @@ func (i *InstructionBuilder) InitPrice(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
 	payload CommandInitPrice,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_InitPrice),
@@ -200,7 +200,7 @@ func (i *InstructionBuilder) InitPrice(
 func (i *InstructionBuilder) InitTest(
 	fundingKey solana.PublicKey,
 	testKey solana.PublicKey,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_InitTest),
@@ -216,7 +216,7 @@ func (i *InstructionBuilder) UpdTest(
 	fundingKey solana.PublicKey,
 	testKey solana.PublicKey,
 	payload CommandUpdTest,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_UpdTest),
@@ -233,7 +233,7 @@ func (i *InstructionBuilder) SetMinPub(
 	fundingKey solana.PublicKey,
 	priceKey solana.PublicKey,
 	payload CommandSetMinPub,
-) solana.Instruction {
+) *Instruction {
 	return &Instruction{
 		programKey: i.programKey,
 		Header:     makeCommandHeader(Instruction_SetMinPub),
