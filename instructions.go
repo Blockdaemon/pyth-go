@@ -44,6 +44,7 @@ const (
 	Instruction_InitTest
 	Instruction_UpdTest
 	Instruction_SetMinPub
+	Instruction_UpdPriceNoFailOnError
 	instruction_count // number of different instruction types
 )
 
@@ -76,6 +77,8 @@ func InstructionIDToName(id int32) string {
 		return "upd_test"
 	case Instruction_SetMinPub:
 		return "set_min_pub"
+	case Instruction_UpdPriceNoFailOnError:
+		return "upd_price_no_fail_on_error"
 	default:
 		return fmt.Sprintf("unsupported (%d)", id)
 	}
@@ -241,7 +244,7 @@ func DecodeInstruction(
 	case Instruction_DelPublisher:
 		impl = new(CommandDelPublisher)
 		numAccounts = 2
-	case Instruction_UpdPrice:
+	case Instruction_UpdPrice, Instruction_UpdPriceNoFailOnError:
 		impl = new(CommandUpdPrice)
 		numAccounts = 3
 	case Instruction_AggPrice:

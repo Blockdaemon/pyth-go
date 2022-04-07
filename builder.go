@@ -163,6 +163,24 @@ func (i *InstructionBuilder) UpdPrice(
 	}
 }
 
+// UpdPriceNoFailOnError publishes a new component price to a price account, ignoring errors.
+func (i *InstructionBuilder) UpdPriceNoFailOnError(
+	fundingKey solana.PublicKey,
+	priceKey solana.PublicKey,
+	payload CommandUpdPrice,
+) *Instruction {
+	return &Instruction{
+		programKey: i.programKey,
+		Header:     makeCommandHeader(Instruction_UpdPriceNoFailOnError),
+		accounts: []*solana.AccountMeta{
+			solana.Meta(fundingKey).SIGNER().WRITE(),
+			solana.Meta(priceKey).WRITE(),
+			solana.Meta(solana.SysVarClockPubkey),
+		},
+		Payload: &payload,
+	}
+}
+
 // AggPrice computes the aggregate price for a product account.
 func (i *InstructionBuilder) AggPrice(
 	fundingKey solana.PublicKey,
