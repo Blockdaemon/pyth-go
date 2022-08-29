@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/cenkalti/backoff/v4 v4.1.3
-	github.com/gagliardetto/binary v0.6.1
+	github.com/gagliardetto/binary v0.7.1
 	github.com/gagliardetto/solana-go v1.3.1-0.20220222155336-dd0af958252d
 	github.com/prometheus/client_golang v1.12.2
 	github.com/shopspring/decimal v1.3.1
