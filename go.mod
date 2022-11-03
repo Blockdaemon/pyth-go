@@ -6,7 +6,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/gagliardetto/binary v0.7.6
 	github.com/gagliardetto/solana-go v1.7.1
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.23.0
