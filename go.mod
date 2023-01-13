@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/cenkalti/backoff/v4 v4.2.0
-	github.com/gagliardetto/binary v0.7.7
+	github.com/gagliardetto/binary v0.7.8
 	github.com/gagliardetto/solana-go v1.8.2
 	github.com/prometheus/client_golang v1.14.0
 	github.com/shopspring/decimal v1.3.1
@@ -46,8 +46,6 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/streamingfast/logging v0.0.0-20220813175024-b4fbb0e893df // indirect
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569 // indirect
-	github.com/tidwall/gjson v1.14.3 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	go.mongodb.org/mongo-driver v1.11.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
